@@ -1,0 +1,1710 @@
+[
+  {
+    "name": "Дороги и транспортная инфраструктура",
+    "total_votes": 86,
+    "complaints": [
+      "проблемы с дорогами (ямы, колдобины)",
+      "транспортные проблемы",
+      "Транспорт и тарифы на перевозки",
+      "Общественный транспорт и дорожная инфраструктура",
+      "Парковки и организация пространства во дворах",
+      "транспорт и дорожная ситуация",
+      "парковка"
+    ],
+    "participants": [
+      {
+        "num": 0,
+        "text": "Ул. Мира, 10 — огромная яма на дороге, провалился колесом! Вот несколько фото:",
+        "author": "ivan_petrov",
+        "media": [
+          "photos/ivan_1.jpg",
+          "photos/ivan_2.jpg",
+          "photos/ivan_3.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 1,
+        "text": "Ужас! А вот как это выглядит с другой стороны:",
+        "author": "anna_s",
+        "media": [
+          "photos/anna_side.jpg"
+        ],
+        "reply_to": 0
+      },
+      {
+        "num": 2,
+        "text": "Я тоже сфоткал эту яму:",
+        "author": "sergey_l",
+        "media": [
+          "photos/sergey_yama.jpg"
+        ],
+        "reply_to": 0
+      },
+      {
+        "num": 3,
+        "text": "Кошмар, там уже не первый месяц яма, никто не заделывает.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 0
+      },
+      {
+        "num": 20,
+        "text": "Опять на ул. Мира новая яма появилась, прямо рядом с той, что фоткал. Вот фото:",
+        "author": "ivan_petrov",
+        "media": [
+          "photos/ivan_new_yama.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 21,
+        "text": "Да что ж такое! Надо в администрацию писать коллективное письмо.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 20
+      },
+      {
+        "num": 22,
+        "text": "Поддерживаю. Давайте создадим петицию?",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 20
+      },
+      {
+        "num": 23,
+        "text": "Я с вами. В прошлом году обещали ремонт, так и не сделали.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 20
+      },
+      {
+        "num": 48,
+        "text": "Сегодня ехал по ул. Октябрьской, там такой колдобины, что подвеску жалко. Вот видео с регистратора:",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 49,
+        "text": "Скинь видео, я тоже проезжал, чуть колесо не погнул.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 48
+      },
+      {
+        "num": 50,
+        "text": "Давайте это видео отправим в группу города, может, чиновники увидят.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 48
+      },
+      {
+        "num": 51,
+        "text": "У меня там друг недавно колесо пробил. Яма глубокая.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 48
+      },
+      {
+        "num": 72,
+        "text": "Вот еще яма на ул. Гагарина, возле дома 15. Будьте осторожны:",
+        "author": "ivan_petrov",
+        "media": [
+          "photos/ivan_gagarina.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 73,
+        "text": "Видел, там и ночью не видно, можно влететь.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 72
+      },
+      {
+        "num": 74,
+        "text": "Надо отметить на карте, чтобы другие знали.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 72
+      },
+      {
+        "num": 75,
+        "text": "Я тоже добавлю фото позже.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 72
+      },
+      {
+        "num": 88,
+        "text": "Видео с регистратора, как машина провалилась в яму на ул. Мира на днях:",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 89,
+        "text": "Жесть! Надеюсь, водитель цел.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 88
+      },
+      {
+        "num": 90,
+        "text": "Это прямо возле моего дома. Яма адская.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 88
+      },
+      {
+        "num": 91,
+        "text": "Видео надо в полицию отправить, чтобы виновных нашли.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 88
+      },
+      {
+        "num": 108,
+        "text": "Сегодня ехал по ул. Победы, там тоже яма приличная. Фото:",
+        "author": "alexey_m",
+        "media": [
+          "photos/alexey_pobedy.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 109,
+        "text": "Да, это продолжение той же беды.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 108
+      },
+      {
+        "num": 110,
+        "text": "Надо добавить в петицию этот адрес.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 108
+      },
+      {
+        "num": 111,
+        "text": "Спасибо за предупреждение.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 108
+      },
+      {
+        "num": 128,
+        "text": "Вчера ночью на ул. Гагарина грузовик провалился в яму. Фото с места:",
+        "author": "ivan_petrov",
+        "media": [
+          "photos/ivan_truck.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 129,
+        "text": "Кошмар! Водитель жив?",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 128
+      },
+      {
+        "num": 130,
+        "text": "Видел эту яму, она огромная.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 128
+      },
+      {
+        "num": 131,
+        "text": "Теперь город точно заставят ремонтировать, если иск подадут.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 128
+      },
+      {
+        "num": 141,
+        "text": "Слышали новость? На мосту через реку трещина, ремонт будут делать.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 177,
+        "text": "Кстати, а вы видели, сколько теперь стоит проезд в автобусе?",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 276,
+        "text": "Машина влетела в отбойник, из-за ямы.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 275
+      },
+      {
+        "num": 302,
+        "text": "Объездная и так разбита.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 301
+      },
+      {
+        "num": 419,
+        "text": "Кстати, о такси: цены выросли.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 420,
+        "text": "Да, теперь минималка 200 рублей.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 419
+      },
+      {
+        "num": 421,
+        "text": "Раньше 150 было.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 420
+      },
+      {
+        "num": 422,
+        "text": "И бензин дорогой.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 421
+      },
+      {
+        "num": 424,
+        "text": "А автобусы дешевле, но опаздывают.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 423
+      },
+      {
+        "num": 431,
+        "text": "Но автобусы теперь реже ходят из-за моста.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 430
+      },
+      {
+        "num": 432,
+        "text": "Точно, мост перекрыт, объезд длиннее.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 431
+      },
+      {
+        "num": 433,
+        "text": "Водители не успевают рейсы делать.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 432
+      },
+      {
+        "num": 434,
+        "text": "И интервалы увеличились.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 433
+      },
+      {
+        "num": 435,
+        "text": "Сегодня ждал 20 минут 12-й.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 434
+      },
+      {
+        "num": 444,
+        "text": "Грузовик упал с моста, потому что ограждение сломано.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 443
+      },
+      {
+        "num": 454,
+        "text": "Но она грунтовая, сейчас раскиснет.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 453
+      },
+      {
+        "num": 455,
+        "text": "Весной вообще каша.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 454
+      },
+      {
+        "num": 463,
+        "text": "А я сегодня через объезд ехал, там яма убитая.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 466,
+        "text": "Да, глубокая.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 465
+      },
+      {
+        "num": 467,
+        "text": "Можно колесо сломать.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 466
+      },
+      {
+        "num": 481,
+        "text": "Там вечно негде припарковаться.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 480
+      },
+      {
+        "num": 482,
+        "text": "Да, я там мучаюсь.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 481
+      },
+      {
+        "num": 485,
+        "text": "Маловато.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 484
+      },
+      {
+        "num": 486,
+        "text": "Хотя бы так.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 485
+      },
+      {
+        "num": 494,
+        "text": "У нас во дворе вообще не протолкнуться.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 493
+      },
+      {
+        "num": 495,
+        "text": "Вечером все ставят, кто как.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 494
+      },
+      {
+        "num": 503,
+        "text": "За счет газона?",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 502
+      },
+      {
+        "num": 504,
+        "text": "Да, убрали клумбы.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 503
+      },
+      {
+        "num": 505,
+        "text": "Жалко зелень.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 504
+      },
+      {
+        "num": 620,
+        "text": "Сегодня нахамил мужик, потому что я занял его \"место\".",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 619
+      },
+      {
+        "num": 622,
+        "text": "Да, у нас во дворе каждый считает место своим.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 621
+      },
+      {
+        "num": 623,
+        "text": "Ставят ведра, цепи.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 622
+      },
+      {
+        "num": 1252,
+        "text": "Там сегодня опять пробка.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1251
+      },
+      {
+        "num": 1254,
+        "text": "Светофор сломался на объездной.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1253
+      },
+      {
+        "num": 1390,
+        "text": "Сегодня объездная стоит.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1389
+      },
+      {
+        "num": 1396,
+        "text": "И те плохо ходят.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1395
+      },
+      {
+        "num": 1397,
+        "text": "Сегодня вообще не пришёл 3-й.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1396
+      },
+      {
+        "num": 1398,
+        "text": "Я полчаса ждал.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1397
+      },
+      {
+        "num": 1486,
+        "text": "А что с парковкой в центре?",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1491,
+        "text": "А то в центре яблоку негде упасть.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 1490
+      },
+      {
+        "num": 1492,
+        "text": "Да, особенно в выходные.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1491
+      }
+    ]
+  },
+  {
+    "name": "Уборка и содержание территорий",
+    "total_votes": 49,
+    "complaints": [
+      "проблемы с уборкой снега",
+      "Уборка территорий (снег, тротуары)",
+      "Организация общественного пространства (детские площадки, зелёные зоны)",
+      "инфраструктура и благоустройство (дороги, мосты, площадки)"
+    ],
+    "participants": [
+      {
+        "num": 4,
+        "text": "Кстати, о проблемах: у нас на ул. Ленина снег вообще не чистят, сугробы огромные. Вот как это выглядит:",
+        "author": "anna_s",
+        "media": [
+          "photos/snow_lenina1.jpg",
+          "photos/snow_lenina2.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 5,
+        "text": "Согласен, у нас во дворе тоже самое. Вот фото:",
+        "author": "sergey_l",
+        "media": [
+          "photos/snow_sergey.jpg"
+        ],
+        "reply_to": 4
+      },
+      {
+        "num": 6,
+        "text": "Да, в этом году коммунальщики плохо работают. Надо жалобу написать.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 4
+      },
+      {
+        "num": 29,
+        "text": "Да, уже устала от снега. И чистят плохо, везде сугробы.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 28
+      },
+      {
+        "num": 40,
+        "text": "Снег на ул. Ленина так и не почистили, вот свежее фото:",
+        "author": "anna_s",
+        "media": [
+          "photos/snow_lenina3.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 41,
+        "text": "Возмутительно! У нас во дворе трактор был только один раз, и то толку мало.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 40
+      },
+      {
+        "num": 42,
+        "text": "Надо звонить в диспетчерскую. У кого номер есть?",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 40
+      },
+      {
+        "num": 43,
+        "text": "Я уже звонил, сказали, что заявку приняли, но сроки не называют.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 40
+      },
+      {
+        "num": 80,
+        "text": "Ул. Ленина наконец почистили! Спасибо всем, кто жаловался. Вот фото:",
+        "author": "anna_s",
+        "media": [
+          "photos/snow_clean_lenina.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 81,
+        "text": "Отлично! Теперь бы так же везде.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 80
+      },
+      {
+        "num": 82,
+        "text": "А у нас во дворе до сих пор сугробы.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 80
+      },
+      {
+        "num": 120,
+        "text": "Снег опять завалил ул. Мира, вот свежие фото:",
+        "author": "sergey_l",
+        "media": [
+          "photos/sergey_mira_snow.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 121,
+        "text": "Да сколько можно!",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 120
+      },
+      {
+        "num": 122,
+        "text": "И не думают чистить.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 120
+      },
+      {
+        "num": 123,
+        "text": "Надо звонить и жаловаться.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 120
+      },
+      {
+        "num": 168,
+        "text": "Снег на ул. Ленина опять почистили, но через час опять намело. Бесполезно.",
+        "author": "anna_s",
+        "media": [
+          "photos/anna_snow_again.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 169,
+        "text": "Да, погода не радует.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 168
+      },
+      {
+        "num": 170,
+        "text": "Главное, что пытаются.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 168
+      },
+      {
+        "num": 171,
+        "text": "А у нас во дворе даже не пытаются.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 168
+      },
+      {
+        "num": 192,
+        "text": "Снег продолжает идти. Город не справляется. Фото с ул. Победы:",
+        "author": "sergey_l",
+        "media": [
+          "photos/sergey_pobedy_snow.jpg"
+        ],
+        "reply_to": -1
+      },
+      {
+        "num": 193,
+        "text": "Сугробы выше человеческого роста.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 192
+      },
+      {
+        "num": 194,
+        "text": "Пешеходам трудно пройти.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 192
+      },
+      {
+        "num": 195,
+        "text": "У нас во дворе тоже не чищено.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 192
+      },
+      {
+        "num": 521,
+        "text": "Кстати, о детях: сегодня видела, как мама с коляской шла по проезжей части, потому что тротуар не чищен.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 522,
+        "text": "Возмутительно!",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 521
+      },
+      {
+        "num": 523,
+        "text": "Коммунальщики опять.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 522
+      },
+      {
+        "num": 524,
+        "text": "Зимой тротуары должны чистить.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 523
+      },
+      {
+        "num": 525,
+        "text": "Но не чистят.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 524
+      },
+      {
+        "num": 526,
+        "text": "Гололед тоже.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 525
+      },
+      {
+        "num": 527,
+        "text": "Посыпают песком кое-как.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 526
+      },
+      {
+        "num": 528,
+        "text": "А у нас во дворе вообще лёд.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 527
+      },
+      {
+        "num": 652,
+        "text": "Сугробы растут.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 651
+      },
+      {
+        "num": 653,
+        "text": "Коммунальщики опять не справятся.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 652
+      },
+      {
+        "num": 654,
+        "text": "Как обычно.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 653
+      },
+      {
+        "num": 511,
+        "text": "А у нас во дворе дети играют, а машины рядом.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 510
+      },
+      {
+        "num": 513,
+        "text": "Надо площадки отдельные.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 512
+      },
+      {
+        "num": 514,
+        "text": "В нашем городе мало площадок.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 513
+      },
+      {
+        "num": 503,
+        "text": "За счет газона?",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 502
+      },
+      {
+        "num": 504,
+        "text": "Да, убрали клумбы.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 503
+      },
+      {
+        "num": 505,
+        "text": "Жалко зелень.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 504
+      },
+      {
+        "num": 843,
+        "text": "Игровых площадок мало.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 842
+      },
+      {
+        "num": 844,
+        "text": "Те, что есть, разбиты.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 843
+      },
+      {
+        "num": 854,
+        "text": "А у нас во дворе парковку сделали вместо площадки.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 853
+      },
+      {
+        "num": 1169,
+        "text": "Вроде ремонтируют, но медленно.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 1168
+      },
+      {
+        "num": 1170,
+        "text": "Сроки сдвинули.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1169
+      },
+      {
+        "num": 1189,
+        "text": "Кстати, о ямах: на ул. Гагарина так и не заделали.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1191,
+        "text": "Да, машины объезжают.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1190
+      },
+      {
+        "num": 1193,
+        "text": "Уже отправил, молчат.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1192
+      }
+    ]
+  },
+  {
+    "name": "Финансовые и трудовые вопросы",
+    "total_votes": 67,
+    "complaints": [
+      "финансовые трудности",
+      "Заработная плата и рынок труда",
+      "цены и зарплаты",
+      "профсоюзы"
+    ],
+    "participants": [
+      {
+        "num": 0,
+        "text": "Привет всем! Слышали новость? Говорят, с нового года зарплаты бюджетникам заморозят.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 2,
+        "text": "Молоко уже по 100 рублей, а было 80.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1
+      },
+      {
+        "num": 3,
+        "text": "А бензин? Скоро летать будем.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 1
+      },
+      {
+        "num": 5,
+        "text": "Это всё инфляция, а зарплаты не успевают.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 0
+      },
+      {
+        "num": 10,
+        "text": "Кстати, о ценах: кто видел, сколько теперь яйца стоят?",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 14,
+        "text": "А вы заметили, что гречка опять подорожала?",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 46,
+        "text": "А у кого-то зарплата вообще не растёт.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 57,
+        "text": "Пенсии маленькие.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 56
+      },
+      {
+        "num": 177,
+        "text": "Кстати, а вы видели, сколько теперь стоит проезд в автобусе?",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 213,
+        "text": "А вы слышали, что хотят повысить пенсионный возраст?",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 221,
+        "text": "Дорого, некогда, квартиры нет.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 220
+      },
+      {
+        "num": 233,
+        "text": "Государство должно помогать.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 232
+      },
+      {
+        "num": 401,
+        "text": "Сегодня на работе сказали, что зарплату задержат.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 403,
+        "text": "У фирмы проблемы, кризис.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 402
+      },
+      {
+        "num": 406,
+        "text": "Ищу, но везде то же.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 405
+      },
+      {
+        "num": 407,
+        "text": "Рынок труда сейчас плохой.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 406
+      },
+      {
+        "num": 408,
+        "text": "Много сокращений.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 407
+      },
+      {
+        "num": 1575,
+        "text": "Опять подняли на хлеб.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1574
+      },
+      {
+        "num": 1576,
+        "text": "Буханка уже 50 рублей.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1575
+      },
+      {
+        "num": 1577,
+        "text": "Была 40.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1576
+      },
+      {
+        "num": 1579,
+        "text": "Зарплаты не поспевают.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1578
+      },
+      {
+        "num": 1585,
+        "text": "У нас профсоюзы слабые.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1584
+      }
+    ]
+  },
+  {
+    "name": "Коммунальные услуги",
+    "total_votes": 95,
+    "complaints": [
+      "Коммунальные услуги (горячая вода, теплоснабжение)",
+      "Тарифы и платежи за коммунальные услуги",
+      "коммунальные услуги (водоснабжение, ремонт)",
+      "водоснабжение",
+      "качество воды"
+    ],
+    "participants": [
+      {
+        "num": 583,
+        "text": "А у нас сегодня отключили горячую воду.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 584,
+        "text": "Опять? Когда включат?",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 583
+      },
+      {
+        "num": 585,
+        "text": "Говорят, неделю.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 584
+      },
+      {
+        "num": 586,
+        "text": "А на улице мороз.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 585
+      },
+      {
+        "num": 591,
+        "text": "У нас тоже часто отключают.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 590
+      },
+      {
+        "num": 593,
+        "text": "Авария на теплотрассе.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 592
+      },
+      {
+        "num": 594,
+        "text": "Вечные аварии.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 593
+      },
+      {
+        "num": 595,
+        "text": "Трубы старые.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 594
+      },
+      {
+        "num": 776,
+        "text": "А у нас есть, но холодная.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 775
+      },
+      {
+        "num": 777,
+        "text": "Так бывает.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 776
+      },
+      {
+        "num": 778,
+        "text": "Перебои.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 777
+      },
+      {
+        "num": 779,
+        "text": "Ветхое оборудование.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 778
+      },
+      {
+        "num": 780,
+        "text": "Трубы гнилые.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 779
+      },
+      {
+        "num": 607,
+        "text": "Но платим все равно много.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 606
+      },
+      {
+        "num": 608,
+        "text": "Тарифы растут.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 607
+      },
+      {
+        "num": 782,
+        "text": "Тарифы повышают, а качество не улучшается.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 781
+      },
+      {
+        "num": 783,
+        "text": "Куда деньги идут?",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 782
+      },
+      {
+        "num": 784,
+        "text": "В карманы.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 783
+      },
+      {
+        "num": 785,
+        "text": "Известно куда.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 784
+      },
+      {
+        "num": 786,
+        "text": "Коррупция.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 785
+      },
+      {
+        "num": 1172,
+        "text": "А горячую воду дали?",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1171
+      },
+      {
+        "num": 1173,
+        "text": "У нас дали, наконец.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1172
+      },
+      {
+        "num": 1174,
+        "text": "И у нас.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1173
+      },
+      {
+        "num": 1400,
+        "text": "А у нас опять воду отключили, на этот раз холодную.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1402,
+        "text": "Порвало трубу на насосной.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 1401
+      },
+      {
+        "num": 1405,
+        "text": "Опять без воды.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1404
+      },
+      {
+        "num": 1424,
+        "text": "У нас жёсткая вода, накипь в чайнике.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1423
+      },
+      {
+        "num": 1425,
+        "text": "Да, у меня тоже.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1424
+      },
+      {
+        "num": 1423,
+        "text": "Из-под крана противно пить.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": 1422
+      }
+    ]
+  },
+  {
+    "name": "Социально-демографические и социальные вопросы",
+    "total_votes": 66,
+    "complaints": [
+      "социально-демографические проблемы",
+      "демографические проблемы и поддержка семей",
+      "здравоохранение и медицина",
+      "социальная активность и вовлечённость граждан"
+    ],
+    "participants": [
+      {
+        "num": 9,
+        "text": "А мои знакомые сокращают, кризис.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 8
+      },
+      {
+        "num": 62,
+        "text": "А молодёжь не хочет работать за такие деньги.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 61
+      },
+      {
+        "num": 213,
+        "text": "А вы слышали, что хотят повысить пенсионный возраст?",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 221,
+        "text": "Дорого, некогда, квартиры нет.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 220
+      },
+      {
+        "num": 233,
+        "text": "Государство должно помогать.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 232
+      },
+      {
+        "num": 321,
+        "text": "Кстати, о семьях: у нас в подъезде молодая пара развелась.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 802,
+        "text": "А вы знаете, что у нас в городе самый низкий уровень рождаемости в области?",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 803,
+        "text": "Не удивлен.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 802
+      },
+      {
+        "num": 804,
+        "text": "Жить не на что, какие дети?",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 803
+      },
+      {
+        "num": 1100,
+        "text": "Всем добрый вечер! Я социолог, изучаю демографическую ситуацию в нашем городе. Хочу обсудить с вами одну важную тему: почему молодые люди не хотят заводить семью и детей? Вот данные: за последние 5 лет рождаемость упала на 30%. Что вы думаете?",
+        "author": "petr_sociolog",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1101,
+        "text": "О, интересно. Я думаю, главная причина — низкие зарплаты.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1100
+      },
+      {
+        "num": 1102,
+        "text": "Согласен, жить не на что.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 1101
+      },
+      {
+        "num": 1103,
+        "text": "И цены растут.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1102
+      },
+      {
+        "num": 1119,
+        "text": "Государство мало помогает.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1118
+      },
+      {
+        "num": 1120,
+        "text": "Маткапитал — капля в море.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1119
+      },
+      {
+        "num": 1289,
+        "text": "А поликлиники бесплатные — очереди.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1288
+      },
+      {
+        "num": 1290,
+        "text": "К врачу не попасть.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1289
+      },
+      {
+        "num": 1291,
+        "text": "Запись на месяц вперёд.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1290
+      },
+      {
+        "num": 1284,
+        "text": "А я сам покупаю, дорого, но надо.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1283
+      },
+      {
+        "num": 1286,
+        "text": "30 тысяч в год.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1285
+      },
+      {
+        "num": 1287,
+        "text": "Не каждый потянет.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1286
+      },
+      {
+        "num": 800,
+        "text": "Социальная активность низкая.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 799
+      },
+      {
+        "num": 801,
+        "text": "Это точно, молодежь пассивна.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 800
+      },
+      {
+        "num": 1360,
+        "text": "Давайте тогда подумаем, как улучшить жизнь в городе?",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1361,
+        "text": "Больше парковок.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1362,
+        "text": "Отремонтировать дороги.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1363,
+        "text": "Снизить тарифы ЖКХ.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1364,
+        "text": "Повысить зарплаты.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1365,
+        "text": "Бесплатные кружки для детей.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1366,
+        "text": "Ясли для малышей.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 1360
+      },
+      {
+        "num": 1367,
+        "text": "Доступное жильё.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1360
+      }
+    ]
+  },
+  {
+    "name": "Жилищные вопросы",
+    "total_votes": 32,
+    "complaints": [
+      "жилищные проблемы и стоимость жилья",
+      "Стоимость и доступность гаражей"
+    ],
+    "participants": [
+      {
+        "num": 804,
+        "text": "Жить не на что, какие дети?",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 803
+      },
+      {
+        "num": 805,
+        "text": "Ипотека, цены.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 804
+      },
+      {
+        "num": 806,
+        "text": "И жилье маленькое.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 805
+      },
+      {
+        "num": 810,
+        "text": "Маткапитал, но инфляция его съедает.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 809
+      },
+      {
+        "num": 811,
+        "text": "На первого дают 600 тысяч, на второго 200.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 810
+      },
+      {
+        "num": 812,
+        "text": "Квартиру не купишь.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 811
+      },
+      {
+        "num": 821,
+        "text": "В чистом поле, без коммуникаций.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 820
+      },
+      {
+        "num": 822,
+        "text": "И что толку?",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 821
+      },
+      {
+        "num": 823,
+        "text": "Стройся сам.",
+        "author": "dmitry_k",
+        "media": [],
+        "reply_to": 822
+      },
+      {
+        "num": 635,
+        "text": "Нет, дорого.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 634
+      }
+    ]
+  },
+  {
+    "name": "Безопасность",
+    "total_votes": 13,
+    "complaints": [
+      "Безопасность и происшествия (аварии, пожары)"
+    ],
+    "participants": [
+      {
+        "num": 444,
+        "text": "Грузовик упал с моста, потому что ограждение сломано.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 443
+      },
+      {
+        "num": 496,
+        "text": "И машины горят иногда.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 495
+      },
+      {
+        "num": 497,
+        "text": "Да, недавно во дворе горела.",
+        "author": "anna_s",
+        "media": [],
+        "reply_to": 496
+      }
+    ]
+  },
+  {
+    "name": "Экология и озеленение",
+    "total_votes": 53,
+    "complaints": [
+      "экология и озеленение",
+      "промышленные выбросы"
+    ],
+    "participants": [
+      {
+        "num": 1496,
+        "text": "А у нас во дворе парковку расширили за счёт газона, но жители недовольны.",
+        "author": "alexey_m",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1498,
+        "text": "Мало зелени было, а теперь совсем пыльно.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1497
+      },
+      {
+        "num": 1504,
+        "text": "А у нас во дворе вообще нет деревьев, одни машины.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1503
+      },
+      {
+        "num": 1506,
+        "text": "Дышать нечем.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1505
+      },
+      {
+        "num": 1508,
+        "text": "А вы знаете, что у нас завод рядом вредные выбросы делает?",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": -1
+      },
+      {
+        "num": 1512,
+        "text": "Но запах иногда есть.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1511
+      },
+      {
+        "num": 1513,
+        "text": "Да, по вечерам чувствуется.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1512
+      }
+    ]
+  },
+  {
+    "name": "Здравоохранение",
+    "total_votes": 21,
+    "complaints": [
+      "здравоохранение и медицина"
+    ],
+    "participants": [
+      {
+        "num": 1289,
+        "text": "А поликлиники бесплатные — очереди.",
+        "author": "maria_k",
+        "media": [],
+        "reply_to": 1288
+      },
+      {
+        "num": 1290,
+        "text": "К врачу не попасть.",
+        "author": "olga_n",
+        "media": [],
+        "reply_to": 1289
+      },
+      {
+        "num": 1291,
+        "text": "Запись на месяц вперёд.",
+        "author": "ivan_petrov",
+        "media": [],
+        "reply_to": 1290
+      },
+      {
+        "num": 1284,
+        "text": "А я сам покупаю, дорого, но надо.",
+        "author": "sergey_l",
+        "media": [],
+        "reply_to": 1283
+      },
+      {
+        "num": 1286,
+        "text": "30 тысяч в год.",
+        "author": "pavel_r",
+        "media": [],
+        "reply_to": 1285
+      },
+      {
+        "num": 1287,
+        "text": "Не каждый потянет.",
+        "author": "nikolay_s",
+        "media": [],
+        "reply_to": 1286
+      }
+    ]
+  }
+]

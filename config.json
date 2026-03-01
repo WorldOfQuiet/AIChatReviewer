@@ -1,0 +1,32 @@
+{
+  "shared": {
+    "chats_file": "agent_data/chats.json"
+  },
+  "parser": {
+    "enabled": true,
+    "preferences": {}
+  },
+  "analyzer": {
+    "enabled": true,
+    "preferences": {
+      "api_key_file": "api_key.json",
+      "agent_id": "b1ghrgitp2eqakb9c44o",
+      "system_prompt_file": "agent_data/analysis_of_chat(instructions_3).txt",
+      "system_prompt_file_2": "agent_data/analysis_of_results.txt",
+      "base_url": "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
+      "model_name": "aliceai-llm/latest",
+      "logging_level": 2,
+      "max_chats": 1,
+      "max_messages_per_chat": 2000,
+      "max_packets": 50,
+      "max_packet_messages": 100,
+      "isolated_packet_size": 400,
+      "max_retries": 3,
+      "steps": {
+        "step1_analyze_chats": true,
+        "step2_aggregate_results": true,
+        "step3_backward_mapping": true
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import requests
 import re
 import os
 import time
+import sys
 
 class AliceAIAgent:
     def __init__(self, api_key_file_path: str, agent_id: str, system_prompt_file_path: str):
@@ -285,441 +286,390 @@ class DataProcessor:
         return packets
 
 
-def load_conversation_text(file_path: str) -> str:
-    """
-    Load full conversation text from a plain text file.
-    (Kept for backward compatibility.)
+class DataAnalyzer:
+    """Класс для выполнения многошагового анализа чатов."""
 
-    :param file_path: path to the file containing conversation text.
-    :return: full conversation text as a string.
-    """
-    with open(file_path, 'r', encoding='utf-8') as file:
-        conversation_text = file.read().strip()
-    return conversation_text
+    def __init__(self, config: dict):
+        """
+        Инициализация анализатора на основе конфигурации.
 
+        :param config: словарь с настройками из analyzer.preferences.
+        """
+        self.config = config
+        self.logging_level = config.get('logging_level', 2)
+        self.max_chats = config.get('max_chats', 1)
+        self.max_messages_per_chat = config.get('max_messages_per_chat', 2000)
+        self.max_packets = config.get('max_packets', 10)
+        self.max_packet_messages = config.get('max_packet_messages', 50)
+        self.isolated_packet_size = config.get('isolated_packet_size', 400)
+        self.max_retries = config.get('max_retries', 3)
 
-def step1_analyze_chats(api_key_file: str, agent_id: str, system_prompt_file: str,
-                        input_json_path: str,
-                        max_messages_per_chat: int = None,
-                        max_packets: int = None,
-                        max_packet_messages: int = None,
-                        isolated_packet_size: int = None,
-                        max_retries: int = 3,
-                        max_chats: int = None) -> None:
-    """
-    Шаг 1: анализ исходных чатов с группировкой по цепочкам ответов.
-    Применяются ограничения:
-      - max_chats: максимальное количество загружаемых чатов (последние).
-      - max_messages_per_chat: сколько последних сообщений загружать из чата.
-      - max_packets: максимальное количество пакетов для обработки (берутся последние пакеты).
-      - max_packet_messages: максимальное количество сообщений в одном пакете (берутся последние сообщения пакета).
-      - isolated_packet_size: размер пакета для изолированных сообщений (если None, все изолированные в одном пакете).
-      - max_retries: максимальное количество повторных попыток при ошибке или пустом результате.
-    Сохраняет результаты в agent_data/analysis_step_1.json.
-    """
-    step1_json_path = "agent_data/analysis_step_1.json"
+        self.api_key_file = config.get('api_key_file')
+        self.agent_id = config.get('agent_id')
+        self.system_prompt_file = config.get('system_prompt_file')
+        self.system_prompt_file_2 = config.get('system_prompt_file_2')
+        self.chats_file = config.get('chats_file')  # путь к файлу с чатами
 
-    # Load all chats from the input JSON file
-    try:
-        chats = DataProcessor.load_chats_from_json(
-            input_json_path,
-            max_messages_per_chat=max_messages_per_chat,
-            max_chats=max_chats
-        )
-    except Exception as e:
-        print(f"Ошибка загрузки JSON: {e}")
-        return
+        # Шаги, которые нужно выполнить
+        steps_config = config.get('steps', {})
+        self.step1_enabled = steps_config.get('step1_analyze_chats', True)
+        self.step2_enabled = steps_config.get('step2_aggregate_results', True)
+        self.step4_enabled = steps_config.get('step4_backward_mapping', True)
+        # step3 игнорируем
 
-    if not chats:
-        print("Нет данных для обработки.")
-        return
+        self._log(1, "Анализатор инициализирован")
 
-    print(f"Загружено чатов: {len(chats)}")
-    print("-" * 50)
+    def _log(self, level: int, message: str):
+        """Логирование с учётом уровня."""
+        if self.logging_level >= level:
+            print(message)
 
-    # Create agent instance for chat analysis (reused for all chats)
-    agent = AliceAIAgent(api_key_file, agent_id, system_prompt_file)
+    def step1_analyze_chats(self):
+        """
+        Шаг 1: анализ исходных чатов с группировкой по цепочкам ответов.
+        Сохраняет результаты в agent_data/analysis_step_1.json.
+        """
+        self._log(1, "Запуск шага 1: анализ чатов")
+        step1_json_path = "agent_data/analysis_step_1.json"
 
-    # List to collect all interim entries from all chats and packets
-    interim_entries = []
-
-    # Process each chat
-    for chat in chats:
-        chat_id = chat['chat_id']
-        chat_name = chat['chat_name']
-        messages = chat['messages']
-
-        # Group messages by reply chains, splitting isolated messages into packets of isolated_packet_size
-        all_packets = DataProcessor.group_messages_by_reply_chain(messages, isolated_packet_size)
-        print(f"\nЧат '{chat_name}' (ID: {chat_id}) исходно разбит на {len(all_packets)} пакетов.")
-
-        # Apply max_packets limit (take last packets)
-        if max_packets is not None and max_packets > 0 and len(all_packets) > max_packets:
-            packets_to_process = all_packets[-max_packets:]
-            print(f"  Ограничение max_packets={max_packets}: взято последних {len(packets_to_process)} пакетов.")
-        else:
-            packets_to_process = all_packets
-
-        for idx, packet_msgs in enumerate(packets_to_process, start=1):
-            # Apply max_packet_messages limit to this packet (take last messages)
-            if max_packet_messages is not None and max_packet_messages > 0 and len(packet_msgs) > max_packet_messages:
-                packet_msgs = packet_msgs[-max_packet_messages:]
-                print(f"    Пакет {idx}: ограничение max_packet_messages={max_packet_messages}, взято последних {len(packet_msgs)} сообщений.")
-
-            # Convert packet messages to text format for the agent
-            packet_lines = [DataProcessor.format_message_for_agent(m) for m in packet_msgs]
-            packet_text = "\n".join(packet_lines)
-
-            print(f"\n--- Обработка пакета {idx} (чат: {chat_name}) ---")
-            print("Текст пакета (первые 500 символов):")
-            print(packet_text[:500] + "..." if len(packet_text) > 500 else packet_text)
-            print("-" * 50)
-
-            # Retry loop
-            parsed_data = None
-            for attempt in range(max_retries):
-                try:
-                    # Send this packet to the agent
-                    response = agent.send_full_conversation(packet_text, temperature=0.7, max_tokens=4096)
-                    print("Ответ агента:")
-                    print(response)
-
-                    # Parse the response – None означает ошибку извлечения
-                    parsed_data = DataProcessor.extract_from_response(response)
-                    if parsed_data is not None:
-                        break  # успешно получили данные (даже пустой список)
-                    else:
-                        print(f"Попытка {attempt+1}: не удалось извлечь данные (отсутствуют теги или невалидный JSON). Повтор через 2 сек...")
-                        time.sleep(2)
-                except Exception as e:
-                    print(f"Ошибка при попытке {attempt+1}: {e}")
-                    if attempt < max_retries - 1:
-                        print("Повтор через 5 сек...")
-                        time.sleep(5)
-                    else:
-                        print("Достигнут лимит попыток. Пропускаем пакет.")
-                        parsed_data = None
-            if parsed_data is None:
-                print("Не удалось получить корректный ответ для пакета, пропускаем.")
-                continue
-
-            # Add count field to each problem
-            problems_with_count = []
-            for problem in parsed_data:
-                if isinstance(problem, dict) and 'name' in problem and 'complaints' in problem:
-                    count = len(problem['complaints'])
-                    problem_with_count = {
-                        'name': problem['name'],
-                        'count': count,
-                        'complaints': problem['complaints']
-                    }
-                    problems_with_count.append(problem_with_count)
-                else:
-                    # If structure is unexpected, keep as is or skip
-                    problems_with_count.append(problem)
-
-            # Create entry for this packet
-            part_chat_name = f"{chat_name} (пакет {idx})"
-            entry = {
-                "chat_id": chat_id,
-                "chat_name": part_chat_name,
-                "analisis_result": problems_with_count
-            }
-            interim_entries.append(entry)
-
-    # Write all interim entries to the interim JSON file (overwrite)
-    os.makedirs(os.path.dirname(step1_json_path), exist_ok=True)
-    with open(step1_json_path, 'w', encoding='utf-8') as f:
-        json.dump(interim_entries, f, ensure_ascii=False, indent=2)
-
-    print(f"\nВсе промежуточные результаты сохранены в файл: {step1_json_path}")
-    print("-" * 50)
-
-
-def step2_aggregate_results(api_key_file: str, agent_id: str, system_prompt_file_2: str,
-                            max_retries: int = 3) -> None:
-    """
-    Шаг 2: агрегация промежуточных результатов через второго агента.
-    Сохраняет результаты в agent_data/analysis_step_2.json.
-    """
-    step1_json_path = "agent_data/analysis_step_1.json"
-    step2_json_path = "agent_data/analysis_step_2.json"
-
-    if not os.path.exists(step1_json_path):
-        print(f"Файл {step1_json_path} не найден. Сначала выполните шаг 1.")
-        return
-
-    agent2 = AliceAIAgent(api_key_file, agent_id, system_prompt_file_2)
-
-    # Load all entries from step1 file
-    with open(step1_json_path, 'r', encoding='utf-8') as f:
-        try:
-            step1_data = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Ошибка чтения файла {step1_json_path}.")
+        if self.chats_file is None:
+            self._log(1, "Ошибка: не указан путь к файлу чатов (chats_file).")
             return
 
-    # Build user query lines: "number | problem name | vote count"
-    lines = []
-    problem_index = 1
-    for chat_entry in step1_data:
-        problems = chat_entry.get('analisis_result', [])
-        for prob in problems:
-            name = prob.get('name', 'Без названия')
-            count = prob.get('count', 0)
-            lines.append(f"{problem_index} | {name} | {count}")
-            problem_index += 1
-
-    if not lines:
-        print("Нет данных для финального анализа.")
-        return
-
-    user_query = "\n".join(lines)
-    print("\nЗапрос второму агенту:")
-    print(user_query)
-    print("-" * 50)
-
-    # Retry loop
-    final_parsed = None
-    for attempt in range(max_retries):
+        # Load all chats from the input JSON file
         try:
-            # Send to second agent
-            response2 = agent2.send_full_conversation(user_query, temperature=0.7, max_tokens=4096)
-            print("Ответ второго агента:")
-            print(response2)
-
-            # Extract final result – None означает ошибку извлечения
-            final_parsed = DataProcessor.extract_from_response(response2)
-            if final_parsed is not None:
-                break
-            else:
-                print(f"Попытка {attempt+1}: не удалось извлечь данные (отсутствуют теги или невалидный JSON). Повтор через 2 сек...")
-                time.sleep(2)
+            chats = DataProcessor.load_chats_from_json(
+                self.chats_file,
+                max_messages_per_chat=self.max_messages_per_chat,
+                max_chats=self.max_chats
+            )
         except Exception as e:
-            print(f"Ошибка при попытке {attempt+1}: {e}")
-            if attempt < max_retries - 1:
-                print("Повтор через 5 сек...")
-                time.sleep(5)
+            self._log(1, f"Ошибка загрузки JSON: {e}")
+            return
+
+        if not chats:
+            self._log(1, "Нет данных для обработки.")
+            return
+
+        self._log(1, f"Загружено чатов: {len(chats)}")
+        self._log(2, "-" * 50)
+
+        # Create agent instance for chat analysis (reused for all chats)
+        agent = AliceAIAgent(self.api_key_file, self.agent_id, self.system_prompt_file)
+
+        # List to collect all interim entries from all chats and packets
+        interim_entries = []
+
+        # Process each chat
+        for chat in chats:
+            chat_id = chat['chat_id']
+            chat_name = chat['chat_name']
+            messages = chat['messages']
+
+            # Group messages by reply chains, splitting isolated messages into packets of isolated_packet_size
+            all_packets = DataProcessor.group_messages_by_reply_chain(messages, self.isolated_packet_size)
+            self._log(2, f"\nЧат '{chat_name}' (ID: {chat_id}) исходно разбит на {len(all_packets)} пакетов.")
+
+            # Apply max_packets limit (take last packets)
+            if self.max_packets is not None and self.max_packets > 0 and len(all_packets) > self.max_packets:
+                packets_to_process = all_packets[-self.max_packets:]
+                self._log(2, f"  Ограничение max_packets={self.max_packets}: взято последних {len(packets_to_process)} пакетов.")
             else:
-                print("Достигнут лимит попыток. Сохраняем пустой результат.")
-                final_parsed = []
+                packets_to_process = all_packets
 
-    if final_parsed is None:
-        final_parsed = []
+            for idx, packet_msgs in enumerate(packets_to_process, start=1):
+                # Apply max_packet_messages limit to this packet (take last messages)
+                if self.max_packet_messages is not None and self.max_packet_messages > 0 and len(packet_msgs) > self.max_packet_messages:
+                    packet_msgs = packet_msgs[-self.max_packet_messages:]
+                    self._log(2, f"    Пакет {idx}: ограничение max_packet_messages={self.max_packet_messages}, взято последних {len(packet_msgs)} сообщений.")
 
-    # Save to step2 JSON file (overwrite)
-    os.makedirs(os.path.dirname(step2_json_path), exist_ok=True)
-    with open(step2_json_path, 'w', encoding='utf-8') as f:
-        json.dump(final_parsed, f, ensure_ascii=False, indent=2)
+                # Convert packet messages to text format for the agent
+                packet_lines = [DataProcessor.format_message_for_agent(m) for m in packet_msgs]
+                packet_text = "\n".join(packet_lines)
 
-    print(f"Итоговый результат сохранён в файл: {step2_json_path}")
-    print("-" * 50)
+                self._log(2, f"\n--- Обработка пакета {idx} (чат: {chat_name}) ---")
+                self._log(2, "Текст пакета (первые 500 символов):")
+                self._log(2, packet_text[:500] + "..." if len(packet_text) > 500 else packet_text)
+                self._log(2, "-" * 50)
 
+                # Retry loop
+                parsed_data = None
+                for attempt in range(self.max_retries):
+                    try:
+                        # Send this packet to the agent
+                        response = agent.send_full_conversation(packet_text, temperature=0.7, max_tokens=4096)
+                        self._log(2, "Ответ агента:")
+                        self._log(2, response)
 
-def step3_compute_votes() -> None:
-    """
-    Шаг 3: подсчёт итоговых голосов по группам.
-    Для каждой группы из step2 суммируются количества (count) соответствующих проблем из step1.
-    Сохраняет результаты в agent_data/analysis_step_3.json.
-    """
-    step1_json_path = "agent_data/analysis_step_1.json"
-    step2_json_path = "agent_data/analysis_step_2.json"
-    step3_json_path = "agent_data/analysis_step_3.json"
+                        # Parse the response – None означает ошибку извлечения
+                        parsed_data = DataProcessor.extract_from_response(response)
+                        if parsed_data is not None:
+                            break  # успешно получили данные (даже пустой список)
+                        else:
+                            self._log(2, f"Попытка {attempt+1}: не удалось извлечь данные (отсутствуют теги или невалидный JSON). Повтор через 2 сек...")
+                            time.sleep(2)
+                    except Exception as e:
+                        self._log(2, f"Ошибка при попытке {attempt+1}: {e}")
+                        if attempt < self.max_retries - 1:
+                            self._log(2, "Повтор через 5 сек...")
+                            time.sleep(5)
+                        else:
+                            self._log(2, "Достигнут лимит попыток. Пропускаем пакет.")
+                            parsed_data = None
+                if parsed_data is None:
+                    self._log(2, "Не удалось получить корректный ответ для пакета, пропускаем.")
+                    continue
 
-    if not os.path.exists(step2_json_path):
-        print(f"Файл {step2_json_path} не найден. Сначала выполните шаг 2.")
-        return
-    if not os.path.exists(step1_json_path):
-        print(f"Файл {step1_json_path} не найден. Сначала выполните шаг 1.")
-        return
-
-    # Загружаем step1, чтобы получить количество голосов для каждой проблемы
-    with open(step1_json_path, 'r', encoding='utf-8') as f:
-        try:
-            step1_data = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Ошибка чтения файла {step1_json_path}.")
-            return
-
-    # Собираем все count'ы в том порядке, в котором проблемы передавались агенту 2
-    problem_counts = []  # список, где индекс i соответствует проблеме номер i+1
-    for chat_entry in step1_data:
-        problems = chat_entry.get('analisis_result', [])
-        for prob in problems:
-            count = prob.get('count', 0)
-            problem_counts.append(count)
-
-    # Загружаем step2 (группы)
-    with open(step2_json_path, 'r', encoding='utf-8') as f:
-        try:
-            step2_data = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Ошибка чтения файла {step2_json_path}.")
-            return
-
-    vote_summary = {}
-
-    if isinstance(step2_data, list):
-        for item in step2_data:
-            if isinstance(item, dict):
-                name = item.get('name', 'Без названия')
-                problem_numbers = item.get('complaints', [])
-                total = 0
-                for num in problem_numbers:
-                    if 1 <= num <= len(problem_counts):
-                        total += problem_counts[num-1]
+                # Add count field to each problem
+                problems_with_count = []
+                for problem in parsed_data:
+                    if isinstance(problem, dict) and 'name' in problem and 'complaints' in problem:
+                        count = len(problem['complaints'])
+                        problem_with_count = {
+                            'name': problem['name'],
+                            'count': count,
+                            'complaints': problem['complaints']
+                        }
+                        problems_with_count.append(problem_with_count)
                     else:
-                        print(f"Предупреждение: номер проблемы {num} вне диапазона")
-                vote_summary[name] = vote_summary.get(name, 0) + total
-    else:
-        # Если step2_data не список (например, уже словарь), просто сохраняем как есть
-        vote_summary = step2_data
+                        # If structure is unexpected, keep as is or skip
+                        problems_with_count.append(problem)
 
-    os.makedirs(os.path.dirname(step3_json_path), exist_ok=True)
-    with open(step3_json_path, 'w', encoding='utf-8') as f:
-        json.dump(vote_summary, f, ensure_ascii=False, indent=2)
+                # Create entry for this packet
+                part_chat_name = f"{chat_name} (пакет {idx})"
+                entry = {
+                    "chat_id": chat_id,
+                    "chat_name": part_chat_name,
+                    "analisis_result": problems_with_count
+                }
+                interim_entries.append(entry)
 
-    print(f"Результат третьего шага сохранён в файл: {step3_json_path}")
-    print("Содержимое (сумма голосов по каждой группе):")
-    print(json.dumps(vote_summary, ensure_ascii=False, indent=2))
-    print("-" * 50)
+        # Write all interim entries to the interim JSON file (overwrite)
+        os.makedirs(os.path.dirname(step1_json_path), exist_ok=True)
+        with open(step1_json_path, 'w', encoding='utf-8') as f:
+            json.dump(interim_entries, f, ensure_ascii=False, indent=2)
 
+        self._log(1, f"Все промежуточные результаты сохранены в файл: {step1_json_path}")
+        self._log(2, "-" * 50)
 
-def step4_backward_mapping(input_json_path: str) -> None:
-    """
-    Шаг 4: обратный проход — сопоставление групп с исходными проблемами и участниками.
-    Сохраняет результаты в agent_data/analysis_step_4.json.
-    """
-    step1_json_path = "agent_data/analysis_step_1.json"
-    step2_json_path = "agent_data/analysis_step_2.json"
-    step3_json_path = "agent_data/analysis_step_3.json"
-    step4_json_path = "agent_data/analysis_step_4.json"
+    def step2_aggregate_results(self):
+        """
+        Шаг 2: агрегация промежуточных результатов через второго агента.
+        Сохраняет результаты в agent_data/analysis_step_2.json.
+        """
+        self._log(1, "Запуск шага 2: агрегация результатов")
+        step1_json_path = "agent_data/analysis_step_1.json"
+        step2_json_path = "agent_data/analysis_step_2.json"
 
-    # Проверим наличие необходимых файлов
-    for path in [step1_json_path, step2_json_path, step3_json_path]:
-        if not os.path.exists(path):
-            print(f"Файл {path} не найден. Выполните предыдущие шаги.")
+        if not os.path.exists(step1_json_path):
+            self._log(1, f"Файл {step1_json_path} не найден. Сначала выполните шаг 1.")
             return
 
-    # 1. Загружаем исходные чаты из входного JSON-файла (без ограничений)
-    try:
-        chats = DataProcessor.load_chats_from_json(input_json_path, max_chats=None)
-    except Exception as e:
-        print(f"Ошибка загрузки исходного JSON: {e}")
-        return
+        agent2 = AliceAIAgent(self.api_key_file, self.agent_id, self.system_prompt_file_2)
 
-    # Строим словарь сообщений по чатам: messages_by_chat[chat_id][msg_id] = сообщение
-    messages_by_chat = {}
-    for chat in chats:
-        chat_id = chat['chat_id']
-        msg_dict = {msg['id']: msg for msg in chat['messages']}
-        messages_by_chat[chat_id] = msg_dict
+        # Load all entries from step1 file
+        with open(step1_json_path, 'r', encoding='utf-8') as f:
+            try:
+                step1_data = json.load(f)
+            except json.JSONDecodeError:
+                self._log(1, f"Ошибка чтения файла {step1_json_path}.")
+                return
 
-    # 2. Загружаем step1_data и строим список problem_entries
-    with open(step1_json_path, 'r', encoding='utf-8') as f:
-        step1_data = json.load(f)
+        # Build user query lines: "number | problem name | vote count"
+        lines = []
+        problem_index = 1
+        for chat_entry in step1_data:
+            problems = chat_entry.get('analisis_result', [])
+            for prob in problems:
+                name = prob.get('name', 'Без названия')
+                count = prob.get('count', 0)
+                lines.append(f"{problem_index} | {name} | {count}")
+                problem_index += 1
 
-    problem_entries = []  # список словарей: {'name': ..., 'chat_id': ..., 'complaints': [номера сообщений]}
-    for chat_entry in step1_data:
-        chat_id = chat_entry['chat_id']
-        problems = chat_entry.get('analisis_result', [])
-        for prob in problems:
-            name = prob.get('name', 'Без названия')
-            complaints = prob.get('complaints', [])
-            problem_entries.append({
-                'name': name,
-                'chat_id': chat_id,
-                'complaints': complaints
+        if not lines:
+            self._log(1, "Нет данных для финального анализа.")
+            return
+
+        user_query = "\n".join(lines)
+        self._log(1, "\nЗапрос второму агенту:")
+        self._log(1, user_query)
+        self._log(2, "-" * 50)
+
+        # Retry loop
+        final_parsed = None
+        for attempt in range(self.max_retries):
+            try:
+                # Send to second agent
+                response2 = agent2.send_full_conversation(user_query, temperature=0.7, max_tokens=4096)
+                self._log(2, "Ответ второго агента:")
+                self._log(2, response2)
+
+                # Extract final result – None означает ошибку извлечения
+                final_parsed = DataProcessor.extract_from_response(response2)
+                if final_parsed is not None:
+                    break
+                else:
+                    self._log(2, f"Попытка {attempt+1}: не удалось извлечь данные (отсутствуют теги или невалидный JSON). Повтор через 2 сек...")
+                    time.sleep(2)
+            except Exception as e:
+                self._log(2, f"Ошибка при попытке {attempt+1}: {e}")
+                if attempt < self.max_retries - 1:
+                    self._log(2, "Повтор через 5 сек...")
+                    time.sleep(5)
+                else:
+                    self._log(2, "Достигнут лимит попыток. Сохраняем пустой результат.")
+                    final_parsed = []
+
+        if final_parsed is None:
+            final_parsed = []
+
+        # Save to step2 JSON file (overwrite)
+        os.makedirs(os.path.dirname(step2_json_path), exist_ok=True)
+        with open(step2_json_path, 'w', encoding='utf-8') as f:
+            json.dump(final_parsed, f, ensure_ascii=False, indent=2)
+
+        self._log(1, f"Итоговый результат сохранён в файл: {step2_json_path}")
+        self._log(2, "-" * 50)
+
+    def step4_backward_mapping(self):
+        """
+        Шаг 4: обратный проход — сопоставление групп с исходными проблемами и участниками.
+        Сохраняет результаты в agent_data/analysis_step_4.json.
+        """
+        self._log(1, "Запуск шага 4: обратный проход")
+        step1_json_path = "agent_data/analysis_step_1.json"
+        step2_json_path = "agent_data/analysis_step_2.json"
+        step4_json_path = "agent_data/analysis_step_4.json"
+
+        # Проверим наличие необходимых файлов
+        for path in [step1_json_path, step2_json_path]:
+            if not os.path.exists(path):
+                self._log(1, f"Файл {path} не найден. Выполните предыдущие шаги.")
+                return
+
+        # 1. Загружаем исходные чаты из входного JSON-файла (без ограничений)
+        try:
+            chats = DataProcessor.load_chats_from_json(self.chats_file, max_chats=None)
+        except Exception as e:
+            self._log(1, f"Ошибка загрузки исходного JSON: {e}")
+            return
+
+        # Строим словарь сообщений по чатам: messages_by_chat[chat_id][msg_id] = сообщение
+        messages_by_chat = {}
+        for chat in chats:
+            chat_id = chat['chat_id']
+            msg_dict = {msg['id']: msg for msg in chat['messages']}
+            messages_by_chat[chat_id] = msg_dict
+
+        # 2. Загружаем step1_data и строим список problem_entries
+        with open(step1_json_path, 'r', encoding='utf-8') as f:
+            step1_data = json.load(f)
+
+        problem_entries = []  # список словарей: {'name': ..., 'chat_id': ..., 'complaints': [номера сообщений]}
+        for chat_entry in step1_data:
+            chat_id = chat_entry['chat_id']
+            problems = chat_entry.get('analisis_result', [])
+            for prob in problems:
+                name = prob.get('name', 'Без названия')
+                complaints = prob.get('complaints', [])
+                problem_entries.append({
+                    'name': name,
+                    'chat_id': chat_id,
+                    'complaints': complaints
+                })
+
+        # 3. Загружаем step2_data (группы)
+        with open(step2_json_path, 'r', encoding='utf-8') as f:
+            step2_data = json.load(f)
+
+        # 4. Формируем результат шага 4 с добавлением participants (полная информация о сообщениях)
+        step4_result = []
+        for group in step2_data:
+            group_name = group.get('name')
+            problem_numbers = group.get('complaints', [])
+            original_names = []
+            participants = []
+            seen = set()  # для избежания дублирования сообщений (по (chat_id, msg_id))
+            for prob_num in problem_numbers:
+                if 1 <= prob_num <= len(problem_entries):
+                    prob_entry = problem_entries[prob_num-1]
+                    original_names.append(prob_entry['name'])
+                    chat_id = prob_entry['chat_id']
+                    for msg_id in prob_entry['complaints']:
+                        key = (chat_id, msg_id)
+                        if key not in seen:
+                            seen.add(key)
+                            if chat_id in messages_by_chat and msg_id in messages_by_chat[chat_id]:
+                                # Добавляем полное сообщение
+                                participants.append(messages_by_chat[chat_id][msg_id])
+                            else:
+                                self._log(2, f"Предупреждение: сообщение {msg_id} в чате {chat_id} не найдено")
+                else:
+                    self._log(2, f"Предупреждение: номер проблемы {prob_num} вне диапазона (всего {len(problem_entries)})")
+            # Правильный подсчёт голосов – количество уникальных участников
+            total_votes = len(participants)
+            step4_result.append({
+                "name": group_name,
+                "total_votes": total_votes,
+                "complaints": original_names,
+                "participants": participants
             })
 
-    # 3. Загружаем step2_data (группы)
-    with open(step2_json_path, 'r', encoding='utf-8') as f:
-        step2_data = json.load(f)
+        os.makedirs(os.path.dirname(step4_json_path), exist_ok=True)
+        with open(step4_json_path, 'w', encoding='utf-8') as f:
+            json.dump(step4_result, f, ensure_ascii=False, indent=2)
 
-    # 4. Загружаем step3_data (суммы голосов) – больше не используется для подсчёта, оставляем для совместимости
-    with open(step3_json_path, 'r', encoding='utf-8') as f:
-        step3_data = json.load(f)
+        self._log(1, f"Результат четвёртого шага сохранён в файл: {step4_json_path}")
+        self._log(2, "Содержимое (группы с исходными названиями проблем и списком участников):")
+        # Для краткости выведем только первые несколько групп при уровне 2
+        if self.logging_level >= 2:
+            print(json.dumps(step4_result[:2], ensure_ascii=False, indent=2) + "...")
+        self._log(2, "-" * 50)
 
-    # 5. Формируем результат шага 4 с добавлением participants (полная информация о сообщениях)
-    step4_result = []
-    for group in step2_data:
-        group_name = group.get('name')
-        problem_numbers = group.get('complaints', [])
-        original_names = []
-        participants = []
-        seen = set()  # для избежания дублирования сообщений (по (chat_id, msg_id))
-        for prob_num in problem_numbers:
-            if 1 <= prob_num <= len(problem_entries):
-                prob_entry = problem_entries[prob_num-1]
-                original_names.append(prob_entry['name'])
-                chat_id = prob_entry['chat_id']
-                for msg_id in prob_entry['complaints']:
-                    key = (chat_id, msg_id)
-                    if key not in seen:
-                        seen.add(key)
-                        if chat_id in messages_by_chat and msg_id in messages_by_chat[chat_id]:
-                            # Добавляем полное сообщение
-                            participants.append(messages_by_chat[chat_id][msg_id])
-                        else:
-                            print(f"Предупреждение: сообщение {msg_id} в чате {chat_id} не найдено")
-            else:
-                print(f"Предупреждение: номер проблемы {prob_num} вне диапазона (всего {len(problem_entries)})")
-        # Правильный подсчёт голосов – количество уникальных участников
-        total_votes = len(participants)
-        step4_result.append({
-            "name": group_name,
-            "total_votes": total_votes,
-            "complaints": original_names,
-            "participants": participants
-        })
+    def run(self):
+        """Запуск шагов в соответствии с настройками."""
+        if self.step1_enabled:
+            self.step1_analyze_chats()
+        else:
+            self._log(1, "Шаг 1 отключён в конфигурации")
 
-    os.makedirs(os.path.dirname(step4_json_path), exist_ok=True)
-    with open(step4_json_path, 'w', encoding='utf-8') as f:
-        json.dump(step4_result, f, ensure_ascii=False, indent=2)
+        if self.step2_enabled:
+            self.step2_aggregate_results()
+        else:
+            self._log(1, "Шаг 2 отключён в конфигурации")
 
-    print(f"Результат четвёртого шага сохранён в файл: {step4_json_path}")
-    print("Содержимое (группы с исходными названиями проблем и списком участников):")
-    # Для краткости выведем только первые несколько групп
-    print(json.dumps(step4_result[:2], ensure_ascii=False, indent=2) + "...")
-    print("-" * 50)
+        # Шаг 3 пропущен
+        if self.step4_enabled:
+            self.step4_backward_mapping()
+        else:
+            self._log(1, "Шаг 4 отключён в конфигурации")
+
+
+def load_config(config_path: str = "config.json") -> dict:
+    """Загружает конфигурационный файл."""
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    return config
 
 
 if __name__ == "__main__":
-    # Path to the API key file
-    api_key_file = "api_key.json"
-    # Catalog identifier (e.g., b1ghrgitp2eqakb9c44o)
-    agent_id = "b1ghrgitp2eqakb9c44o"
-    # Path to the system prompt file for the first agent
-    system_prompt_file = "agent_data/analysis_of_chat(instructions_3).txt"
-    # Path to the system prompt file for the second agent
-    system_prompt_file_2 = "agent_data/analysis_of_results.txt"
-    # Path to the input JSON file containing all chats
-    input_json_path = "pre-test/chats.json"
+    # Загрузка конфигурации
+    try:
+        config = load_config()
+    except Exception as e:
+        print(f"Ошибка загрузки конфигурации: {e}")
+        sys.exit(1)
 
-    # Параметры ограничений
-    max_chats = 1                         # сколько последних чатов загружать
-    max_messages_per_chat = 2000          # сколько последних сообщений брать из чата (весь чат)
-    max_packets = 10                       # максимальное количество пакетов для обработки
-    max_packet_messages = 50                # максимальное количество сообщений в одном пакете
-    isolated_packet_size = 400              # размер пакета для изолированных сообщений
-    max_retries = 3                         # количество повторных попыток при ошибках
+    # Получение параметров анализатора
+    analyzer_config = config.get("analyzer", {})
+    if not analyzer_config.get("enabled", True):
+        print("Анализатор отключён в конфигурации.")
+        sys.exit(0)
 
-    # Шаг 1: анализ исходных чатов (требует API)
-    step1_analyze_chats(api_key_file, agent_id, system_prompt_file,
-                        input_json_path,
-                        max_messages_per_chat=max_messages_per_chat,
-                        max_packets=max_packets,
-                        max_packet_messages=max_packet_messages,
-                        isolated_packet_size=isolated_packet_size,
-                        max_retries=max_retries,
-                        max_chats=max_chats)
+    prefs = analyzer_config.get("preferences", {})
+    # Добавляем путь к файлу чатов из shared
+    prefs["chats_file"] = config.get("shared", {}).get("chats_file", "agent_data/chats.json")
 
-    # Шаг 2: агрегация результатов через второго агента (требует API)
-    step2_aggregate_results(api_key_file, agent_id, system_prompt_file_2,
-                            max_retries=max_retries)
-
-    # Шаг 3: подсчёт голосов (без API)
-    step3_compute_votes()
-
-    # Шаг 4: обратный проход (без API)
-    step4_backward_mapping(input_json_path)
+    # Создание и запуск анализатора
+    analyzer = DataAnalyzer(prefs)
+    analyzer.run()

@@ -1,7 +1,7 @@
 import time
 import logging
-from datetime import datetime
-from config import SEARCH_QUERY, START_DATE, REQUEST_DELAY
+from datetime import datetime, timedelta
+from config import GROUPS_FILE, REQUEST_DELAY
 from vk_api import VKAPI
 from db import Database
 
@@ -11,28 +11,32 @@ class VKParser:
     def __init__(self, db_file):
         self.vk = VKAPI()
         self.db = Database(db_file)
-        self.start_timestamp = int(datetime.strptime(START_DATE, "%Y-%m-%d").timestamp())
+        self.start_timestamp = int((datetime.now() - timedelta(days=30)).timestamp())
+        logger.info("Период сбора: с %s", datetime.fromtimestamp(self.start_timestamp))
+
+    def read_groups_from_file(self, filename):
+        with open(filename, 'r', encoding='utf-8') as f:
+            groups = [line.strip() for line in f if line.strip()]
+        return groups
 
     def run(self):
-        logger.info("Поиск групп по запросу '%s'", SEARCH_QUERY)
-        groups = self.vk.search_groups(SEARCH_QUERY)
-        logger.info("Найдено групп: %d", len(groups))
+        logger.info("Чтение списка групп из файла %s", GROUPS_FILE)
+        group_screen_names = self.read_groups_from_file(GROUPS_FILE)
+        logger.info("Найдено групп для обработки: %d", len(group_screen_names))
 
-        for group in groups:
-            group_id = group["id"]
-            logger.info("Обработка группы ID %d", group_id)
+        for screen_name in group_screen_names:
             try:
-                group_info = self.vk.get_group_info(group_id)[0]
-                screen_name = group_info.get("screen_name", "")
-                name = group_info.get("name", "")
-                self.db.add_group(group_id, screen_name, name)
+                group_info = self.vk.get_group_info(screen_name)[0]
+                group_id = group_info['id']
+                group_screen = group_info.get('screen_name', '')
+                group_name = group_info.get('name', '')
+                self.db.add_group(group_id, group_screen, group_name)
+                logger.info("Обработка группы %s (ID %d)", group_name, group_id)
+                self._parse_group_wall(group_id)
             except Exception as e:
-                logger.error("Не удалось получить информацию о группе %d: %s", group_id, e)
+                logger.error("Ошибка при обработке группы %s: %s", screen_name, e)
                 continue
-
-            self._parse_group_wall(group_id)
             time.sleep(REQUEST_DELAY)
-
         logger.info("Сбор завершён")
 
     def _parse_group_wall(self, group_id):
@@ -49,18 +53,13 @@ class VKParser:
             if not posts:
                 break
 
-            all_old = True
             for post in posts:
                 post_date = post["date"]
                 if post_date >= self.start_timestamp:
-                    all_old = False
                     self._process_post(group_id, post)
                 else:
-                    logger.info("Достигнут пост старше %s, остановка группы %d", START_DATE, group_id)
+                    logger.info("Достигнут пост старше периода, остановка группы %d", group_id)
                     return
-            if all_old:
-                logger.info("Все посты выборки старше %s, остановка группы %d", START_DATE, group_id)
-                return
 
             offset += count
             time.sleep(REQUEST_DELAY)
@@ -84,24 +83,43 @@ class VKParser:
     def _parse_comments(self, owner_id, post_vk_id, local_post_id):
         offset = 0
         count = 100
+        max_retries = 3
+
         while True:
-            try:
-                comments_data = self.vk.get_comments(owner_id, post_vk_id, count=count, offset=offset)
-            except Exception as e:
-                logger.error("Ошибка получения комментариев к посту %d: %s", post_vk_id, e)
+            for attempt in range(max_retries):
+                try:
+                    comments_data = self.vk.get_comments(owner_id, post_vk_id, count=count, offset=offset)
+                    break
+                except Exception as e:
+                    logger.error(f"Попытка {attempt+1} для поста {post_vk_id} offset {offset} не удалась: {e}")
+                    if attempt == max_retries - 1:
+                        logger.error(f"Не удалось получить комментарии для поста {post_vk_id}, пропускаем")
+                        return
+                    time.sleep(2 ** attempt)
+
+            total = comments_data.get('count', 0)
+            items = comments_data.get("items", [])
+
+            if not items:
+                logger.info(f"Пост {post_vk_id}: нет комментариев")
                 break
 
-            comments = comments_data.get("items", [])
-            if not comments:
-                break
-
-            for comment in comments:
+            for comment in items:
                 comment_date = comment["date"]
                 if comment_date >= self.start_timestamp:
-                    self._process_comment(comment, local_post_id)
+                    try:
+                        self._process_comment(comment, local_post_id)
+                    except Exception as e:
+                        logger.error(f"Ошибка при сохранении комментария {comment['id']}: {e}")
+                else:
+                    logger.debug(f"Комментарий {comment['id']} пропущен по дате")
 
             offset += count
             time.sleep(REQUEST_DELAY)
+
+            if total > 0 and offset >= total:
+                logger.info(f"Пост {post_vk_id}: собрано {total} комментариев")
+                break
 
     def _process_comment(self, comment, local_post_id):
         from_id = comment["from_id"]
@@ -118,17 +136,14 @@ class VKParser:
             self._process_attachment("comment", local_comment_id, att)
 
     def _get_or_create_user(self, vk_id):
-        if vk_id < 0:
-            pass
         try:
             user_info = self.vk.get_users([vk_id])[0]
             screen_name = user_info.get("screen_name", "")
             first_name = user_info.get("first_name", "")
             last_name = user_info.get("last_name", "")
-        except:
-            screen_name = ""
-            first_name = ""
-            last_name = ""
+        except Exception as e:
+            logger.error(f"Не удалось получить информацию о пользователе {vk_id}: {e}")
+            screen_name = first_name = last_name = ""
 
         return self.db.add_user(vk_id, screen_name, first_name, last_name)
 

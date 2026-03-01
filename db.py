@@ -1,9 +1,11 @@
 import sqlite3
+import time
 from datetime import datetime
 
 class Database:
     def __init__(self, db_file):
         self.conn = sqlite3.connect(db_file)
+        self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.row_factory = sqlite3.Row
         self.create_tables()
 
@@ -68,12 +70,27 @@ class Database:
         """)
         self.conn.commit()
 
+    def _execute_with_retry(self, query, params=(), retries=5):
+        for attempt in range(retries):
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(query, params)
+                self.conn.commit()
+                return cursor
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e) and attempt < retries - 1:
+                    time.sleep(0.5 * (attempt + 1))
+                else:
+                    raise
+
     def add_group(self, vk_id, screen_name, name):
-        cursor = self.conn.cursor()
-        cursor.execute("INSERT OR IGNORE INTO groups (vk_id, screen_name, name) VALUES (?, ?, ?)",
-                       (vk_id, screen_name, name))
-        self.conn.commit()
-        return cursor.lastrowid
+        cursor = self._execute_with_retry(
+            "INSERT OR IGNORE INTO groups (vk_id, screen_name, name) VALUES (?, ?, ?)",
+            (vk_id, screen_name, name)
+        )
+        cursor.execute("SELECT id FROM groups WHERE vk_id = ?", (vk_id,))
+        row = cursor.fetchone()
+        return row["id"] if row else None
 
     def get_group_by_vk_id(self, vk_id):
         cursor = self.conn.cursor()
@@ -82,45 +99,40 @@ class Database:
         return row["id"] if row else None
 
     def add_user(self, vk_id, screen_name, first_name, last_name):
+        self._execute_with_retry(
+            "INSERT OR IGNORE INTO users (vk_id, screen_name, first_name, last_name) VALUES (?, ?, ?, ?)",
+            (vk_id, screen_name, first_name, last_name)
+        )
         cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT OR IGNORE INTO users (vk_id, screen_name, first_name, last_name)
-            VALUES (?, ?, ?, ?)
-        """, (vk_id, screen_name, first_name, last_name))
-        self.conn.commit()
         cursor.execute("SELECT id FROM users WHERE vk_id = ?", (vk_id,))
         row = cursor.fetchone()
         return row["id"]
 
     def add_post(self, vk_id, group_id, text, date, author_id):
+        self._execute_with_retry(
+            "INSERT OR IGNORE INTO posts (vk_id, group_id, text, date, author_id) VALUES (?, ?, ?, ?, ?)",
+            (vk_id, group_id, text, date, author_id)
+        )
         cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT OR IGNORE INTO posts (vk_id, group_id, text, date, author_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (vk_id, group_id, text, date, author_id))
-        self.conn.commit()
         cursor.execute("SELECT id FROM posts WHERE vk_id = ? AND group_id = ?", (vk_id, group_id))
         row = cursor.fetchone()
         return row["id"]
 
     def add_comment(self, vk_id, post_id, text, date, author_id):
+        self._execute_with_retry(
+            "INSERT OR IGNORE INTO comments (vk_id, post_id, text, date, author_id) VALUES (?, ?, ?, ?, ?)",
+            (vk_id, post_id, text, date, author_id)
+        )
         cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT OR IGNORE INTO comments (vk_id, post_id, text, date, author_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (vk_id, post_id, text, date, author_id))
-        self.conn.commit()
         cursor.execute("SELECT id FROM comments WHERE vk_id = ? AND post_id = ?", (vk_id, post_id))
         row = cursor.fetchone()
         return row["id"]
 
     def add_media(self, owner_type, owner_id, url, media_type):
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO media (owner_type, owner_id, url, type)
-            VALUES (?, ?, ?, ?)
-        """, (owner_type, owner_id, url, media_type))
-        self.conn.commit()
+        self._execute_with_retry(
+            "INSERT INTO media (owner_type, owner_id, url, type) VALUES (?, ?, ?, ?)",
+            (owner_type, owner_id, url, media_type)
+        )
 
     def close(self):
         self.conn.close()

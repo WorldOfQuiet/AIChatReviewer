@@ -23,19 +23,19 @@
 
 1. Склонируйте репозиторий:
    ```bash
-   git clone https://github.com/yourusername/AIChatReviewer.git
+   git clone https://github.com/WorldOfQuiet/AIChatReviewer.git
    cd AIChatReviewer
    ```
 
 2. Установите зависимости:
    ```bash
-   pip install requests
+   pip install -r requirements.txt
    ```
 
 3. Подготовьте файл с API-ключом (например, `api_key.json`):
    ```json
    {
-     "api_key": "ваш_ключ_яндекс_облака"
+     "api_key": "ваш_API_ключ_яндекс_облака"
    }
    ```
 
@@ -133,12 +133,6 @@
 python main.py
 ```
 
-Или, если основной код находится в `agent.py` (как в текущей версии):
-
-```bash
-python agent.py
-```
-
 Программа выполнит шаги в соответствии с настройками и создаст в папке `agent_data` файлы:
 - `analysis_step_1.json` – результаты первого агента (список проблем по каждому пакету).
 - `analysis_step_2.json` – результаты второго агента (итоговые категории с номерами исходных проблем).
@@ -201,4 +195,3 @@ python agent.py
 
 - Для работы требуется действующий API-ключ Яндекс.Облака и доступ к модели.
 - При смене модели убедитесь, что она поддерживает формат запроса `gpt://<catalog_id>/<model_name>`.
-- Парсер (`parser` в конфиге) пока не реализован и зарезервирован для будущего использования.

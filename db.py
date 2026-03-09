@@ -134,5 +134,10 @@ class Database:
             (owner_type, owner_id, url, media_type)
         )
 
+    def post_exists(self, vk_id, group_id):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT 1 FROM posts WHERE vk_id = ? AND group_id = ?", (vk_id, group_id))
+        return cursor.fetchone() is not None
+
     def close(self):
         self.conn.close()

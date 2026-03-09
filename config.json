@@ -4,10 +4,18 @@
   },
   "parser": {
     "enabled": true,
-    "preferences": {}
+    "vk_token": "vk1.a.owlO-kYQ9zaFjyqYqqoGZUHtsI95Ew0yPqKq2GyEpr2Angu8R906LJGmWFG36rYtS-l3TJJam3YuMrqPzKsdz9IC7lUvkGbUlwyXM5L3EjYmQtX9SXXthcYMW_7BGyF3u31QBfDfLESh0RBI6oYInPDFeXdVitu1Kis0tX_txIH8jy0qYY6jCSlmVOJSWVIWTz-sCNShYBd2hIAhZ3ZEhg",
+    "vk_api_version": "5.131",
+    "groups_file": "groups.txt",
+    "db_file": "vk_data.db",
+    "request_delay": 0.5,
+    "log_file": "vk_parser.log",
+    "start_date": "2025-03-08",
+    "end_date": "2025-05-05",
+    "days_back": 365
   },
   "analyzer": {
-    "enabled": true,
+    "enabled": false,
     "preferences": {
       "api_key_file": "api_key.json",
       "agent_id": "b1ghrgitp2eqakb9c44o",

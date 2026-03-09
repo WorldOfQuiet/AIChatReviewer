@@ -1,18 +1,36 @@
 import time
 import logging
 from datetime import datetime, timedelta
-from config import GROUPS_FILE, REQUEST_DELAY
 from vk_api import VKAPI
 from db import Database
 
 logger = logging.getLogger(__name__)
 
 class VKParser:
-    def __init__(self, db_file):
-        self.vk = VKAPI()
+    def __init__(self, vk_token: str, vk_api_version: str, request_delay: float,
+                 groups_file: str, db_file: str, start_date: str = None,
+                 end_date: str = None, days_back: int = 30):
+        self.vk = VKAPI(vk_token, vk_api_version, request_delay)
         self.db = Database(db_file)
-        self.start_timestamp = int((datetime.now() - timedelta(days=30)).timestamp())
-        logger.info("Период сбора: с %s", datetime.fromtimestamp(self.start_timestamp))
+        self.groups_file = groups_file
+        self.start_timestamp = None
+        self.end_timestamp = None
+
+        if start_date:
+            self.start_timestamp = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
+        else:
+            self.start_timestamp = int((datetime.now() - timedelta(days=days_back)).timestamp())
+
+        if end_date:
+            self.end_timestamp = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
+            # Если end_date раньше start_date, меняем местами или предупреждаем
+            if self.end_timestamp < self.start_timestamp:
+                logger.warning("end_date раньше start_date, меняю их местами")
+                self.start_timestamp, self.end_timestamp = self.end_timestamp, self.start_timestamp
+
+        logger.info("Период сбора: с %s по %s",
+                    datetime.fromtimestamp(self.start_timestamp),
+                    datetime.fromtimestamp(self.end_timestamp) if self.end_timestamp else "наст. время")
 
     def read_groups_from_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as f:
@@ -20,8 +38,8 @@ class VKParser:
         return groups
 
     def run(self):
-        logger.info("Чтение списка групп из файла %s", GROUPS_FILE)
-        group_screen_names = self.read_groups_from_file(GROUPS_FILE)
+        logger.info("Чтение списка групп из файла %s", self.groups_file)
+        group_screen_names = self.read_groups_from_file(self.groups_file)
         logger.info("Найдено групп для обработки: %d", len(group_screen_names))
 
         for screen_name in group_screen_names:
@@ -36,12 +54,15 @@ class VKParser:
             except Exception as e:
                 logger.error("Ошибка при обработке группы %s: %s", screen_name, e)
                 continue
-            time.sleep(REQUEST_DELAY)
+            time.sleep(0.5)  # задержка между группами
         logger.info("Сбор завершён")
 
     def _parse_group_wall(self, group_id):
         offset = 0
         count = 100
+        # Флаг, что мы уже вошли в целевой интервал
+        in_target_interval = False
+
         while True:
             try:
                 wall_data = self.vk.get_wall_posts(-group_id, count=count, offset=offset)
@@ -55,14 +76,28 @@ class VKParser:
 
             for post in posts:
                 post_date = post["date"]
+
+                # Если задана конечная дата и пост новее её – пропускаем (ещё не вошли в интервал)
+                if self.end_timestamp and post_date > self.end_timestamp:
+                    logger.debug(f"Пост {post['id']} новее конечной даты, пропускаем")
+                    continue
+
+                # Если пост попадает в интервал [start, end]
                 if post_date >= self.start_timestamp:
+                    # Проверяем, не превышает ли он конечную дату (если она задана)
+                    if self.end_timestamp and post_date > self.end_timestamp:
+                        # Этот случай уже отсекли выше, но на всякий случай
+                        continue
+                    # Обрабатываем пост
                     self._process_post(group_id, post)
+                    in_target_interval = True
                 else:
+                    # Пост старше start – значит, мы вышли за нижнюю границу интервала
                     logger.info("Достигнут пост старше периода, остановка группы %d", group_id)
                     return
 
             offset += count
-            time.sleep(REQUEST_DELAY)
+            time.sleep(0.5)
 
     def _process_post(self, group_id, post):
         from_id = post["from_id"]
@@ -115,7 +150,7 @@ class VKParser:
                     logger.debug(f"Комментарий {comment['id']} пропущен по дате")
 
             offset += count
-            time.sleep(REQUEST_DELAY)
+            time.sleep(0.5)
 
             if total > 0 and offset >= total:
                 logger.info(f"Пост {post_vk_id}: собрано {total} комментариев")

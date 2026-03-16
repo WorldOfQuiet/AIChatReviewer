@@ -1,18 +1,21 @@
 {
   "shared": {
-    "chats_file": "agent_data/chats.json"
+    "chats_file": "agent_data/chats.json",
+    "logging_level": 1
   },
   "parser": {
     "enabled": false,
-    "vk_token": "vk1.a.owlO-kYQ9zaFjyqYqqoGZUHtsI95Ew0yPqKq2GyEpr2Angu8R906LJGmWFG36rYtS-l3TJJam3YuMrqPzKsdz9IC7lUvkGbUlwyXM5L3EjYmQtX9SXXthcYMW_7BGyF3u31QBfDfLESh0RBI6oYInPDFeXdVitu1Kis0tX_txIH8jy0qYY6jCSlmVOJSWVIWTz-sCNShYBd2hIAhZ3ZEhg",
-    "vk_api_version": "5.131",
-    "groups_file": "groups.txt",
-    "db_file": "vk_data.db",
-    "request_delay": 0.5,
-    "log_file": "vk_parser.log",
-    "start_date": "2025-03-08",
-    "end_date": "2025-05-05",
-    "days_back": 365
+    "preferences": {
+      "vk_token": "vk1.a.owlO-kYQ9zaFjyqYqqoGZUHtsI95Ew0yPqKq2GyEpr2Angu8R906LJGmWFG36rYtS-l3TJJam3YuMrqPzKsdz9IC7lUvkGbUlwyXM5L3EjYmQtX9SXXthcYMW_7BGyF3u31QBfDfLESh0RBI6oYInPDFeXdVitu1Kis0tX_txIH8jy0qYY6jCSlmVOJSWVIWTz-sCNShYBd2hIAhZ3ZEhg",
+      "vk_api_version": "5.131",
+      "groups_file": "groups.txt",
+      "db_file": "vk_data.db",
+      "request_delay": 0.5,
+      "log_file": "vk_parser.log",
+      "start_date": "2025-03-08",
+      "end_date": "2025-05-05",
+      "days_back": 365
+    }
   },
   "analyzer": {
     "enabled": true,
@@ -23,7 +26,6 @@
       "system_prompt_file_2": "agent_data/analysis_of_results.txt",
       "base_url": "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
       "model_name": "aliceai-llm/latest",
-      "logging_level": 2,
       "max_chats": 1,
       "max_messages_per_chat": 60000,
       "max_chain_packets": 3000,
@@ -42,12 +44,13 @@
     "enabled": true,
     "preferences": {
       "data_file": "agent_data/analysis_step_3.json",
-      "interval_days": 60,
+      "interval_days": 14,
       "start_date": null,
       "end_date": null,
-      "save_path": "votes_7-days.png",
+      "save_path": "votes_14-days-n.png",
       "show": false,
-      "log_level": 0
+      "min_percent_threshold": 5.0,
+      "smoothing_window": 3
     }
   }
 }

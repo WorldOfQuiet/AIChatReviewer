@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import os
 from typing import List, Dict, Any, Optional
+import numpy as np
 
 
 class Visualizer:
@@ -17,10 +18,16 @@ class Visualizer:
                 end_date (str, optional): конечная дата в формате YYYY-MM-DD.
                 save_path (str, optional): путь для сохранения графика.
                 show (bool): показывать ли график интерактивно.
+                min_percent_threshold (float): порог в процентах от среднего (по умолчанию 5).
+                smoothing_window (int): размер окна для сглаживания (0 - отключено,
+                                          положительное число - количество значимых интервалов
+                                          слева и справа от текущего, которые учитываются)
         """
         self.prefs = preferences
         self.data_file = preferences.get('data_file', 'agent_data/analysis_step_3.json')
         self.log_level = preferences.get('log_level', 2)
+        self.threshold_percent = preferences.get('min_percent_threshold', 5.0)
+        self.smoothing_window = preferences.get('smoothing_window', 0)
         self.data = self._load_data()
         self._log(1, f"✅ Загружено {len(self.data)} категорий из файла {self.data_file}")
 
@@ -49,12 +56,10 @@ class Visualizer:
         return None
 
     def _log(self, level: int, *args, **kwargs):
-        """Выводит сообщение, если текущий уровень логирования >= level."""
         if self.log_level >= level:
             print(*args, **kwargs)
 
     def run(self):
-        """Запускает построение графика с параметрами из preferences."""
         self.plot_votes_over_intervals(
             interval_days=self.prefs.get('interval_days', 7),
             start_date=self.prefs.get('start_date'),
@@ -66,303 +71,141 @@ class Visualizer:
     def plot_votes_over_intervals(self, interval_days: int, start_date: Optional[str] = None,
                                    end_date: Optional[str] = None, save_path: Optional[str] = None,
                                    show: bool = True):
-        """
-        Интервал считается заполненным, если есть хотя бы один голос после его окончания.
-        Если последний интервал с данными не заполнен (нет голосов после него),
-        он достраивается пропорционально фактической длине охвата внутри этого интервала.
-        """
         self._log(1, "\n" + "=" * 100)
-        self._log(1, "🚀 НАЧАЛО ПОСТРОЕНИЯ ГРАФИКА")
+        self._log(1, "🚀 ПОСТРОЕНИЕ ГРАФИКА")
         self._log(1, "=" * 100)
-        self._log(1, f"📌 Параметр interval_days = {interval_days} дн.")
-        
-        # ========== ШАГ 1: Обработка входных дат ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "📅 ШАГ 1: ОБРАБОТКА ВХОДНЫХ ДАТ")
-        self._log(1, "=" * 100)
-        
-        start_dt = None
-        if start_date:
-            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-            self._log(2, f"   start_date задан: {start_date} → {start_dt}")
-        else:
-            self._log(2, "   start_date НЕ задан")
-        
-        end_dt = None
-        if end_date:
-            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-            end_dt = end_dt.replace(hour=23, minute=59, second=59)
-            self._log(2, f"   end_date задан: {end_date} → {end_dt}")
-        else:
-            self._log(2, "   end_date НЕ задан")
+        self._log(1, f"📌 interval_days = {interval_days}")
+        self._log(1, f"📌 Порог: {self.threshold_percent}% от среднего")
+        self._log(1, f"📌 Окно сглаживания: {self.smoothing_window}")
 
-        # ========== ШАГ 2: Сбор дат по категориям ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "📂 ШАГ 2: СБОР ДАТ ПО КАТЕГОРИЯМ")
-        self._log(1, "=" * 100)
-        
+        # Границы
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59) if end_date else None
+
+        # Сбор дат по категориям
         categories_data = {}
-        categories_last_date = {}
-        
-        for cat_idx, category in enumerate(self.data):
-            name = category.get('name', 'Без названия')
-            participants = category.get('participants', [])
-            self._log(2, f"\n   📁 Категория {cat_idx + 1}/{len(self.data)}: '{name}'")
-            
+        for cat in self.data:
+            name = cat.get('name', 'Без названия')
             dates = []
-            for p in participants:
-                date_str = p.get('date')
-                if not date_str:
-                    continue
-                dt = self._parse_date(date_str)
-                if dt is None:
-                    continue
-                if start_dt and dt < start_dt:
-                    continue
-                if end_dt and dt > end_dt:
-                    continue
-                dates.append(dt)
-            
+            for p in cat.get('participants', []):
+                dt = self._parse_date(p.get('date'))
+                if dt and (not start_dt or dt >= start_dt) and (not end_dt or dt <= end_dt):
+                    dates.append(dt)
             if dates:
                 categories_data[name] = sorted(dates)
-                categories_last_date[name] = max(dates)
-                self._log(2, f"      ✅ Дат после фильтрации: {len(dates)}")
-                self._log(2, f"      📍 Диапазон: {min(dates).strftime('%d.%m %H:%M')} — {max(dates).strftime('%d.%m %H:%M')}")
-            else:
-                self._log(2, f"      ⚠️ Нет данных после фильтрации")
-
-        self._log(1, f"\n   📊 ВСЕГО категорий с данными: {len(categories_data)}")
-        total_votes = sum(len(dates) for dates in categories_data.values())
-        self._log(1, f"   📊 ВСЕГО голосов: {total_votes}")
 
         if not categories_data:
             self._log(1, "❌ НЕТ ДАННЫХ!")
             return
 
-        # ========== ШАГ 3: Глобальный диапазон ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "🌍 ШАГ 3: ГЛОБАЛЬНЫЙ ДИАПАЗОН ДАТ")
-        self._log(1, "=" * 100)
-        
-        all_dates = []
-        for dates in categories_data.values():
-            all_dates.extend(dates)
-        
-        global_min = min(all_dates)
+        # Глобальный диапазон
+        all_dates = [d for dates in categories_data.values() for d in dates]
+        global_min = min(all_dates).replace(hour=0, minute=0, second=0, microsecond=0)
         global_max = max(all_dates)
-        
-        self._log(2, f"   Глобальный минимум: {global_min.strftime('%d.%m.%Y %H:%M:%S')}")
-        self._log(2, f"   Глобальный максимум: {global_max.strftime('%d.%m.%Y %H:%M:%S')}")
 
-        if start_dt is None:
-            start_dt = global_min.replace(hour=0, minute=0, second=0, microsecond=0)
-            self._log(2, f"   ✅ start_dt = {start_dt}")
-        
-        if end_dt is None:
-            end_dt = global_max
-            self._log(2, f"   ✅ end_dt = {end_dt}")
+        start_dt = start_dt or global_min
+        end_dt = end_dt or global_max
 
-        # ========== ШАГ 4: Создание интервалов ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "📏 ШАГ 4: СОЗДАНИЕ ИНТЕРВАЛОВ")
-        self._log(1, "=" * 100)
-        
+        # Формируем интервалы
         intervals = []
-        current = start_dt
-        interval_num = 0
-        
-        while current <= end_dt:
-            interval_end = current + timedelta(days=interval_days)
-            intervals.append((current, interval_end))
-            self._log(2, f"   Интервал #{interval_num}: [{current.strftime('%d.%m')} — {interval_end.strftime('%d.%m')}]")
-            current = interval_end
-            interval_num += 1
-        
-        self._log(1, f"   ✅ ВСЕГО интервалов: {len(intervals)}")
-
-        # ========== ШАГ 5: Подсчёт голосов и определение заполненности ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "📊 ШАГ 5: ПОДСЧЁТ ГОЛОСОВ ПО ИНТЕРВАЛАМ")
-        self._log(1, "=" * 100)
-        
-        category_interval_counts = {}      # {cat_name: {idx: count}}
-        category_interval_filled = {}      # {cat_name: {idx: bool}}
-        category_last_vote_in_interval = {} # для достройки: {cat_name: {idx: datetime}}
-        
-        for cat_name, dates in categories_data.items():
-            # Для уровня 1 выводим краткую информацию о категории
-            self._log(1, f"\n   📁 {cat_name}")
-            
-            # Для уровня 2 выводим детали
-            self._log(2, f"\n{'=' * 80}")
-            self._log(2, f"   КАТЕГОРИЯ: '{cat_name}'")
-            self._log(2, f"{'=' * 80}")
-            self._log(2, f"   Всего голосов: {len(dates)}")
-            self._log(2, f"   Последняя дата: {categories_last_date[cat_name].strftime('%d.%m.%Y %H:%M:%S')}")
-            
-            category_interval_counts[cat_name] = {}
-            category_interval_filled[cat_name] = {}
-            category_last_vote_in_interval[cat_name] = {}
-            
-            intervals_with_data = 0
-            for idx, (int_start, int_end) in enumerate(intervals):
-                # голоса в интервале [int_start, int_end)
-                votes_in_interval = [d for d in dates if int_start <= d < int_end]
-                count = len(votes_in_interval)
-                category_interval_counts[cat_name][idx] = count
-                
-                if count > 0:
-                    intervals_with_data += 1
-                    category_last_vote_in_interval[cat_name][idx] = max(votes_in_interval)
-                
-                # заполнен ли интервал? (есть голос после конца)
-                has_voice_after = any(d >= int_end for d in dates)
-                category_interval_filled[cat_name][idx] = has_voice_after
-                
-                self._log(2, f"   Интервал #{idx} [{int_start.strftime('%d.%m')}-{int_end.strftime('%d.%m')}]: {count} голосов — {'✅' if has_voice_after else '❌'}")
-            
-            # Для уровня 1 добавим сводку: общее число голосов и сколько интервалов затронуто
-            self._log(1, f"      Всего {len(dates)} голосов, данные в {intervals_with_data} интервалах")
-
-        # ========== ШАГ 6: Достройка последнего неполного интервала ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "🔧 ШАГ 6: ДОСТРОЙКА ПОСЛЕДНЕГО НЕПОЛНОГО ИНТЕРВАЛА")
-        self._log(1, "=" * 100)
-        
+        cur = start_dt
+        while cur <= end_dt:
+            nxt = cur + timedelta(days=interval_days)
+            intervals.append((cur, nxt))
+            cur = nxt
         total_intervals = len(intervals)
-        self._log(1, f"   Общее количество интервалов: {total_intervals}")
-        
-        for cat_name, dates in categories_data.items():
-            # Для уровня 1 выводим заголовок категории без лишних разделителей
-            self._log(1, f"\n   📁 {cat_name}")
-            
-            # Для уровня 2 оставляем полный вывод
-            self._log(2, f"\n{'=' * 80}")
-            self._log(2, f"   📁 КАТЕГОРИЯ: '{cat_name}'")
-            self._log(2, f"{'=' * 80}")
-            
-            # 6.1: Поиск последнего интервала с данными
-            self._log(2, f"\n   🔍 6.1: ПОИСК ПОСЛЕДНЕГО ИНТЕРВАЛА С ДАННЫМИ")
-            
-            last_data_idx = -1
-            for idx in range(total_intervals - 1, -1, -1):
-                count = category_interval_counts[cat_name][idx]
-                if count > 0 and last_data_idx == -1:
-                    last_data_idx = idx
-                    self._log(2, f"      ✅ НАЙДЕН: интервал #{idx} ({count} голосов)")
-            
-            if last_data_idx == -1:
-                self._log(2, f"   ⚠️ Нет данных — пропускаем")
+        self._log(1, f"📊 Всего интервалов: {total_intervals}")
+
+        # Подсчёт сырых значений по интервалам
+        raw = {cat: [0]*total_intervals for cat in categories_data}
+        last_vote = {cat: {} for cat in categories_data}
+        for cat, dates in categories_data.items():
+            for idx, (int_start, int_end) in enumerate(intervals):
+                cnt = sum(1 for d in dates if int_start <= d < int_end)
+                raw[cat][idx] = cnt
+                if cnt:
+                    last_vote[cat][idx] = max(d for d in dates if int_start <= d < int_end)
+
+        # Достройка последнего неполного интервала для каждой категории
+        for cat in categories_data:
+            nonzero = [i for i, v in enumerate(raw[cat]) if v > 0]
+            if not nonzero:
                 continue
-            
-            self._log(2, f"   📌 last_data_idx = {last_data_idx}")
-            
-            # 6.2: Проверка заполненности последнего интервала с данными
-            self._log(2, f"\n   🔍 6.2: ПРОВЕРКА ЗАПОЛНЕННОСТИ")
-            
-            last_interval_end = intervals[last_data_idx][1]
-            voices_after = [d for d in dates if d >= last_interval_end]
-            
-            self._log(2, f"   Конец интервала {last_data_idx}: {last_interval_end.strftime('%d.%m.%Y %H:%M:%S')}")
-            self._log(2, f"   Голосов после конца: {len(voices_after)}")
-            
-            is_filled = len(voices_after) > 0
-            
-            # 6.3: Если не заполнен — применяем достройку по времени
-            if not is_filled:
-                self._log(2, f"\n   🔧 6.3: ПРИМЕНЕНИЕ ДОСТРОЙКИ (по фактической длине охвата)")
-                
-                last_vote_in_interval = category_last_vote_in_interval[cat_name][last_data_idx]
-                int_start, int_end = intervals[last_data_idx]
-                
-                interval_length_hours = (int_end - int_start).total_seconds() / 3600
-                covered_length_hours = (last_vote_in_interval - int_start).total_seconds() / 3600
-                
-                if covered_length_hours <= 0:
-                    self._log(2, f"   ⚠️ Странная ситуация: покрытая длина <= 0, оставляем как есть")
-                    multiplier = 1.0
-                else:
-                    multiplier = interval_length_hours / covered_length_hours
-                
-                self._log(2, f"   Интервал {last_data_idx}: {int_start.strftime('%d.%m %H:%M')} — {int_end.strftime('%d.%m %H:%M')}")
-                self._log(2, f"   Последний голос в интервале: {last_vote_in_interval.strftime('%d.%m %H:%M')}")
-                self._log(2, f"   Длина интервала: {interval_length_hours:.2f} ч")
-                self._log(2, f"   Охвачено данными: {covered_length_hours:.2f} ч")
-                self._log(2, f"   Коэффициент достройки: {multiplier:.4f}")
-                
-                original_value = category_interval_counts[cat_name][last_data_idx]
-                new_value = round(original_value * multiplier)
-                
-                self._log(2, f"   📊 ДОСТРОЙКА:")
-                self._log(2, f"   Интервал #{last_data_idx}: {original_value} × {multiplier:.4f} = {original_value * multiplier:.2f} → {new_value}")
-                
-                category_interval_counts[cat_name][last_data_idx] = new_value
+            last_idx = nonzero[-1]
+            int_start, int_end = intervals[last_idx]
+            has_after = any(d >= int_end for d in categories_data[cat])
+            if not has_after and last_idx in last_vote[cat]:
+                last = last_vote[cat][last_idx]
+                interval_len = (int_end - int_start).total_seconds()
+                covered = (last - int_start).total_seconds()
+                if covered > 0:
+                    raw[cat][last_idx] = round(raw[cat][last_idx] * (interval_len / covered))
+
+        # ========== ПРИМЕНЕНИЕ ПОРОГА (отсечение незначащих интервалов) ==========
+        threshold = {}
+        filtered = {}
+        for cat in categories_data:
+            vals = raw[cat]
+            # Среднее по всем интервалам (включая нулевые)
+            mean_val = sum(vals) / total_intervals if total_intervals else 0
+            thr = mean_val * (self.threshold_percent / 100.0)
+            threshold[cat] = thr
+            # Обнуляем значения ниже порога
+            filtered[cat] = [v if v >= thr else 0 for v in vals]
+
+        # ========== СГЛАЖИВАНИЕ по значимым (ненулевым) интервалам ==========
+        if self.smoothing_window > 0:
+            w = self.smoothing_window
+            for cat in categories_data:
+                vals = filtered[cat]
+                # Находим индексы значимых интервалов (после порога они ненулевые)
+                sig_indices = [i for i, v in enumerate(vals) if v > 0]
+                if not sig_indices:
+                    continue
+                smoothed_vals = vals[:]  # копия
+                for pos, idx in enumerate(sig_indices):
+                    left = max(0, pos - w)
+                    right = min(len(sig_indices)-1, pos + w)
+                    window_indices = sig_indices[left:right+1]
+                    window_values = [vals[i] for i in window_indices]
+                    smoothed_vals[idx] = sum(window_values) / len(window_values)
+                filtered[cat] = smoothed_vals
+            self._log(1, f"   ✅ Сглаживание применено (симметричное окно {w} по значимым интервалам)")
+
+        # ========== ПОДГОТОВКА ДАННЫХ ДЛЯ ГРАФИКА ==========
+        # Оставляем только точки со значением > 0
+        plot_data = {}  # cat -> list of (date, value)
+        for cat in categories_data:
+            points = []
+            for idx, val in enumerate(filtered[cat]):
+                if val > 0:
+                    points.append((intervals[idx][0], val))
+            if points:
+                plot_data[cat] = points
             else:
-                self._log(2, f"\n   ⏭️ ДОСТРОЙКА НЕ ТРЕБУЕТСЯ (интервал заполнен)")
-            
-            # 6.4: Итоговые значения (выводим компактно для уровня 1, подробно для уровня 2)
-            values = [category_interval_counts[cat_name].get(i, 0) for i in range(total_intervals)]
-            self._log(1, f"      Итоговые значения: {values}")
-            
-            if self.log_level >= 2:
-                self._log(2, f"\n   📋 6.4: ИТОГОВЫЕ ЗНАЧЕНИЯ:")
-                for idx in range(total_intervals):
-                    self._log(2, f"   Интервал #{idx}: {values[idx]}")
+                self._log(2, f"   {cat}: нет точек после фильтрации")
 
-        # ========== ШАГ 7: Данные для графика ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "📈 ШАГ 7: ДАННЫЕ ДЛЯ ГРАФИКА")
-        self._log(1, "=" * 100)
-        
-        x = list(range(len(intervals)))
-        all_categories = sorted(categories_data.keys())
-        interval_labels = [f"{start.strftime('%d.%m')}-{end.strftime('%d.%m')}" 
-                          for start, end in intervals]
-        
-        self._log(2, f"   Ось X: {x}")
-        self._log(2, f"   Подписи: {interval_labels}")
-        
-        self._log(1, f"\n   ЗНАЧЕНИЯ ПО КАТЕГОРИЯМ:")
-        for cat in all_categories:
-            y = [category_interval_counts[cat].get(i, 0) for i in x]
-            self._log(1, f"   {cat}: {y}")
-
-        # ========== ШАГ 8: Построение ==========
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "🎨 ШАГ 8: ПОСТРОЕНИЕ ГРАФИКА")
-        self._log(1, "=" * 100)
-        
+        # ========== ПОСТРОЕНИЕ ГРАФИКА ==========
         fig, ax = plt.subplots(figsize=(14, 7))
-        
-        for cat in all_categories:
-            y = [category_interval_counts[cat].get(i, 0) for i in x]
-            ax.plot(x, y, marker='o', linestyle='-', label=cat, markersize=8, linewidth=2)
-            self._log(2, f"   Построено: '{cat}': {y}")
+        for cat, points in plot_data.items():
+            if not points:
+                continue
+            dates, values = zip(*points)
+            ax.plot(dates, values, marker='o', linestyle='-', label=cat, markersize=6, linewidth=2)
 
-        ax.set_xlabel('Временной интервал', fontsize=12)
-        ax.set_ylabel('Количество голосов', fontsize=12)
-        ax.set_title(f'Динамика количества голосов (интервал = {interval_days} дн.)', fontsize=14)
+        ax.set_xlabel('Дата')
+        ax.set_ylabel('Количество голосов')
+        ax.set_title(f'Динамика голосов (интервал {interval_days} дн.)')
         ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), fontsize=9)
         ax.grid(True, linestyle='--', alpha=0.7)
-
-        ax.set_xticks(x)
-        ax.set_xticklabels(interval_labels, rotation=45, ha='right')
-        
-        for i in range(len(intervals) + 1):
-            ax.axvline(x=i-0.5, color='gray', linestyle=':', alpha=0.3)
-
+        plt.xticks(rotation=45)
         plt.tight_layout()
 
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            self._log(1, f"\n   ✅ Сохранено: {save_path}")
-
+            self._log(1, f"✅ График сохранён: {save_path}")
         if show:
             plt.show()
         else:
             plt.close()
-            self._log(2, f"   Окно закрыто (show=False)")
-        
-        self._log(1, "\n" + "=" * 100)
-        self._log(1, "✅ ЗАВЕРШЕНИЕ")
-        self._log(1, "=" * 100 + "\n")
+        self._log(1, "✅ ЗАВЕРШЕНО")

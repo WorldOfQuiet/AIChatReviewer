@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import os
 from typing import List, Dict, Any, Optional
-import numpy as np
 
 
 class Visualizer:

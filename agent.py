@@ -135,6 +135,71 @@ class DataProcessor:
             return None  # невалидный JSON – неудача
 
     @staticmethod
+    def extract_groups_from_step2_response(response_text: str) -> List[Dict[str, Any]]:
+        """
+        Извлекает группы из ответа второго агента.
+        Ожидаемый формат:
+        <result>
+        {
+          "Группа1": 1,
+          "Группа2": 2,
+          ...
+        }
+        <separator>
+        1 | 1
+        2 | 2
+        ...
+        </result>
+        """
+        match = re.search(r'<result>(.*?)</result>', response_text, re.DOTALL)
+        if not match:
+            return None
+
+        content = match.group(1).strip()
+        # Разделяем по <separator>
+        if '<separator>' not in content:
+            return None
+
+        groups_json_str, lines_str = content.split('<separator>', 1)
+        groups_json_str = groups_json_str.strip()
+        lines_str = lines_str.strip()
+
+        # Парсим словарь групп
+        try:
+            groups_dict = json.loads(groups_json_str)
+        except json.JSONDecodeError:
+            return None
+
+        # Создаём обратное отображение номер групп -> названия
+        num_to_name = {v: k for k, v in groups_dict.items()}
+
+        # Собираем списки номеров проблем по группам
+        group_complaints = {num: [] for num in num_to_name.keys()}
+        for line in lines_str.split('\n'):
+            if not line.strip():
+                continue
+            parts = line.split('|')
+            if len(parts) != 2:
+                continue
+            try:
+                prob_num = int(parts[0].strip())
+                group_num = int(parts[1].strip())
+            except ValueError:
+                continue
+            if group_num in group_complaints:
+                group_complaints[group_num].append(prob_num)
+
+        # Преобразуем в список групп
+        result = []
+        for group_num, complaints in group_complaints.items():
+            if group_num in num_to_name:
+                result.append({
+                    'name': num_to_name[group_num],
+                    'complaints': complaints
+                })
+        return result
+
+    @staticmethod
     def load_chats_from_json(file_path: str, max_messages_per_chat: int = None, max_chats: int = None) -> list:
         """
         Load chats data from a JSON file containing an array of chat objects.
@@ -659,13 +724,13 @@ class DataAnalyzer:
                     try:
                         response2 = agent2.send_full_conversation(user_query, temperature=0.7, max_tokens=4096)
                         self._log(2, f"    Ответ агента (уровень {level}, попытка {attempt+1}):")
-                        self._log(2, response2[:200] + "..." if len(response2) > 200 else response2)
+                        self._log(2, response2)  # полный ответ
 
-                        final_parsed = DataProcessor.extract_from_response(response2)
+                        final_parsed = DataProcessor.extract_groups_from_step2_response(response2)
                         if final_parsed is not None:
                             break
                         else:
-                            self._log(2, f"    Попытка {attempt+1}: не удалось извлечь данные, повтор через 2 сек...")
+                            self._log(2, f"    Попытка {attempt+1}: не удалось извлечь группы, повтор через 2 сек...")
                             time.sleep(2)
                     except Exception as e:
                         self._log(2, f"    Ошибка при попытке {attempt+1}: {e}")
@@ -673,28 +738,52 @@ class DataAnalyzer:
                             self._log(2, "    Повтор через 5 сек...")
                             time.sleep(5)
                         else:
-                            self._log(2, "    Достигнут лимит попыток. Возвращаем пустой результат.")
+                            self._log(2, "    Достигнут лимит попыток. Все проблемы этого пакета будут отнесены к группе 'Не классифицировано'.")
                             final_parsed = []
-                if final_parsed is None:
-                    final_parsed = []
 
                 groups = []
-                for group in final_parsed:
-                    if not isinstance(group, dict) or 'name' not in group or 'complaints' not in group:
-                        self._log(2, f"    Пропуск некорректной группы: {group}")
-                        continue
-                    name = group['name']
-                    local_nums = group['complaints']  # список локальных номеров (1..len(current_items))
-                    # Собираем все исходные индексы из соответствующих элементов
-                    all_indices = []
-                    for local in local_nums:
-                        if 1 <= local <= len(current_items):
+                if final_parsed and isinstance(final_parsed, list):
+                    covered = set()
+                    for group in final_parsed:
+                        if not isinstance(group, dict) or 'name' not in group or 'complaints' not in group:
+                            self._log(2, f"    Пропуск некорректной группы: {group}")
+                            continue
+                        name = group['name']
+                        local_nums = group['complaints']
+                        all_indices = []
+                        for local in local_nums:
+                            if 1 <= local <= len(current_items):
+                                item = current_items[local-1]
+                                all_indices.extend(item['indices'])
+                                covered.add(local)
+                            else:
+                                self._log(2, f"    Предупреждение: локальный номер {local} вне диапазона")
+                        groups.append({
+                            'name': name,
+                            'indices': all_indices
+                        })
+                    # Добавляем нераспределённые
+                    all_nums = set(range(1, len(current_items)+1))
+                    missing = all_nums - covered
+                    if missing:
+                        self._log(2, f"    Найдены нераспределённые локальные номера: {sorted(missing)}. Добавляем группу 'Не классифицировано'.")
+                        all_indices = []
+                        for local in sorted(missing):
                             item = current_items[local-1]
                             all_indices.extend(item['indices'])
-                        else:
-                            self._log(2, f"    Предупреждение: локальный номер {local} вне диапазона")
+                        groups.append({
+                            'name': 'Не классифицировано',
+                            'indices': all_indices
+                        })
+                else:
+                    # Если ответ пустой или невалидный, все локальные номера попадают в 'Не классифицировано'
+                    self._log(2, f"    Ответ агента невалиден. Все {len(current_items)} локальных проблем отправлены в группу 'Не классифицировано'.")
+                    all_indices = []
+                    for local in range(1, len(current_items)+1):
+                        item = current_items[local-1]
+                        all_indices.extend(item['indices'])
                     groups.append({
-                        'name': name,
+                        'name': 'Не классифицировано',
                         'indices': all_indices
                     })
                 return groups

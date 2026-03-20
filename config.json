@@ -1,7 +1,7 @@
 {
   "shared": {
     "chats_file": "agent_data/chats.json",
-    "logging_level": 1
+    "logging_level": 2
   },
   "parser": {
     "enabled": false,
@@ -33,7 +33,7 @@
       "max_chain_packet_messages": 20,
       "isolated_packet_size": 200,
       "max_retries": 2,
-      "problems_per_packet": 100,
+      "problems_per_packet": 200,
       "steps": {
         "step1_analyze_chats": false,
         "step2_aggregate_results": true,
@@ -50,7 +50,7 @@
       "end_date": null,
       "save_path": "votes_14-days-n.png",
       "show": false,
-      "min_percent_threshold": 4.0,
+      "min_percent_threshold": 15.0,
       "smoothing_window": 5
     }
   }

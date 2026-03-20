@@ -81,10 +81,15 @@ class Visualizer:
         start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
         end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59) if end_date else None
 
-        # Сбор дат по категориям
+        # Сбор дат по категориям (исключаем группу "Не классифицировано")
         categories_data = {}
+        excluded_count = 0
         for cat in self.data:
             name = cat.get('name', 'Без названия')
+            # Пропускаем категорию с названием "Не классифицировано"
+            if "Не классифицировано" in name:
+                excluded_count += 1
+                continue
             dates = []
             for p in cat.get('participants', []):
                 dt = self._parse_date(p.get('date'))
@@ -93,8 +98,11 @@ class Visualizer:
             if dates:
                 categories_data[name] = sorted(dates)
 
+        if excluded_count:
+            self._log(1, f"⚠️ Исключено {excluded_count} категорий с названием 'Не классифицировано'")
+
         if not categories_data:
-            self._log(1, "❌ НЕТ ДАННЫХ!")
+            self._log(1, "❌ НЕТ ДАННЫХ ПОСЛЕ ИСКЛЮЧЕНИЯ НЕКЛАССИФИЦИРОВАННЫХ КАТЕГОРИЙ!")
             return
 
         # Глобальный диапазон

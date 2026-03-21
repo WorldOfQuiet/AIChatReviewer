@@ -3,39 +3,43 @@ import logging
 from datetime import datetime, timedelta
 from vk_api import VKAPI
 from db import Database
+from exporter import export_to_json
 
 logger = logging.getLogger(__name__)
 
 class VKParser:
-    def __init__(self, vk_token: str, vk_api_version: str, request_delay: float,
-                 groups_file: str, db_file: str, start_date: str = None,
-                 end_date: str = None, days_back: int = 30):
-        self.vk = VKAPI(vk_token, vk_api_version, request_delay)
-        self.db = Database(db_file)
-        self.groups_file = groups_file
-        self.start_timestamp = None
-        self.end_timestamp = None
-
-        if start_date:
-            self.start_timestamp = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
-        else:
-            self.start_timestamp = int((datetime.now() - timedelta(days=days_back)).timestamp())
-
-        if end_date:
-            self.end_timestamp = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
-            # Если end_date раньше start_date, меняем местами или предупреждаем
-            if self.end_timestamp < self.start_timestamp:
-                logger.warning("end_date раньше start_date, меняю их местами")
-                self.start_timestamp, self.end_timestamp = self.end_timestamp, self.start_timestamp
-
+    def __init__(self, prefs: dict):
+        self.prefs = prefs
+        self.vk = VKAPI(
+            token=prefs.get('vk_token'),
+            api_version=prefs.get('vk_api_version', '5.131'),
+            request_delay=prefs.get('request_delay', 0.5)
+        )
+        self.db = Database(prefs.get('db_file', 'vk_data.db'))
+        self.groups_file = prefs.get('groups_file', 'groups.txt')
+        self.start_timestamp = self._get_start_timestamp()
+        self.end_timestamp = self._get_end_timestamp()
         logger.info("Период сбора: с %s по %s",
                     datetime.fromtimestamp(self.start_timestamp),
                     datetime.fromtimestamp(self.end_timestamp) if self.end_timestamp else "наст. время")
 
+    def _get_start_timestamp(self):
+        start_date = self.prefs.get('start_date')
+        days_back = self.prefs.get('days_back', 30)
+        if start_date:
+            return int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
+        else:
+            return int((datetime.now() - timedelta(days=days_back)).timestamp())
+
+    def _get_end_timestamp(self):
+        end_date = self.prefs.get('end_date')
+        if end_date:
+            return int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
+        return None
+
     def read_groups_from_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as f:
-            groups = [line.strip() for line in f if line.strip()]
-        return groups
+            return [line.strip() for line in f if line.strip()]
 
     def run(self):
         logger.info("Чтение списка групп из файла %s", self.groups_file)
@@ -54,15 +58,17 @@ class VKParser:
             except Exception as e:
                 logger.error("Ошибка при обработке группы %s: %s", screen_name, e)
                 continue
-            time.sleep(0.5)  # задержка между группами
-        logger.info("Сбор завершён")
+            time.sleep(0.5)
+
+        logger.info("Сбор завершён. Экспорт в JSON...")
+        export_to_json(self.prefs.get('db_file', 'vk_data.db'), "output.json")
+        logger.info("Экспорт завершён.")
 
     def _parse_group_wall(self, group_id):
         offset = 0
         count = 100
-        # Флаг, что мы уже вошли в целевой интервал
-        in_target_interval = False
-
+        total_processed = 0
+        print(f"\nНачинаем сбор постов в группе {group_id}")
         while True:
             try:
                 wall_data = self.vk.get_wall_posts(-group_id, count=count, offset=offset)
@@ -76,28 +82,21 @@ class VKParser:
 
             for post in posts:
                 post_date = post["date"]
-
-                # Если задана конечная дата и пост новее её – пропускаем (ещё не вошли в интервал)
                 if self.end_timestamp and post_date > self.end_timestamp:
-                    logger.debug(f"Пост {post['id']} новее конечной даты, пропускаем")
                     continue
-
-                # Если пост попадает в интервал [start, end]
                 if post_date >= self.start_timestamp:
-                    # Проверяем, не превышает ли он конечную дату (если она задана)
-                    if self.end_timestamp and post_date > self.end_timestamp:
-                        # Этот случай уже отсекли выше, но на всякий случай
-                        continue
-                    # Обрабатываем пост
                     self._process_post(group_id, post)
-                    in_target_interval = True
+                    total_processed += 1
+                    # Обновляем строку прогресса (одна строка)
+                    print(f"\r  Группа {group_id}: обработано {total_processed} постов", end="", flush=True)
                 else:
-                    # Пост старше start – значит, мы вышли за нижнюю границу интервала
-                    logger.info("Достигнут пост старше периода, остановка группы %d", group_id)
+                    # Когда вышли за период, переводим строку и выходим
+                    print(f"\n  Группа {group_id}: достигнут пост старше периода, остановка")
                     return
 
             offset += count
             time.sleep(0.5)
+        print(f"\nГруппа {group_id} завершена, всего обработано {total_processed} постов")
 
     def _process_post(self, group_id, post):
         from_id = post["from_id"]
@@ -171,14 +170,26 @@ class VKParser:
             self._process_attachment("comment", local_comment_id, att)
 
     def _get_or_create_user(self, vk_id):
-        try:
-            user_info = self.vk.get_users([vk_id])[0]
-            screen_name = user_info.get("screen_name", "")
-            first_name = user_info.get("first_name", "")
-            last_name = user_info.get("last_name", "")
-        except Exception as e:
-            logger.error(f"Не удалось получить информацию о пользователе {vk_id}: {e}")
-            screen_name = first_name = last_name = ""
+        screen_name = first_name = last_name = ""
+
+        if vk_id > 0:
+            # Пользователь
+            try:
+                user_info = self.vk.get_users([vk_id])[0]
+                screen_name = user_info.get("screen_name", "")
+                first_name = user_info.get("first_name", "")
+                last_name = user_info.get("last_name", "")
+            except Exception as e:
+                logger.error(f"Не удалось получить информацию о пользователе {vk_id}: {e}")
+        else:
+            # Группа (vk_id < 0)
+            try:
+                group_info = self.vk.get_group_info(abs(vk_id))[0]  # передаём положительный ID
+                screen_name = group_info.get("screen_name", "")
+                first_name = group_info.get("name", "")  # название группы
+                last_name = ""  # у групп нет фамилии
+            except Exception as e:
+                logger.error(f"Не удалось получить информацию о группе {vk_id}: {e}")
 
         return self.db.add_user(vk_id, screen_name, first_name, last_name)
 

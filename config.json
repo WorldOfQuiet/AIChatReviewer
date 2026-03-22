@@ -1,7 +1,7 @@
 {
   "shared": {
     "chats_file": "agent_data/chats.json",
-    "logging_level": 1
+    "logging_level": 2
   },
   "parser": {
     "enabled": false,
@@ -18,7 +18,7 @@
     }
   },
   "analyzer": {
-    "enabled": true,
+    "enabled": false,
     "preferences": {
       "api_key_file": "api_key.json",
       "agent_id": "b1ghrgitp2eqakb9c44o",
@@ -33,10 +33,11 @@
       "max_chain_packet_messages": 20,
       "isolated_packet_size": 200,
       "max_retries": 2,
+      "problems_per_packet": 200,
       "steps": {
         "step1_analyze_chats": false,
-        "step2_aggregate_results": false,
-        "step3_backward_mapping": false
+        "step2_aggregate_results": true,
+        "step3_backward_mapping": true
       }
     }
   },
@@ -49,8 +50,8 @@
       "end_date": null,
       "save_path": "votes_14-days-n.png",
       "show": false,
-      "min_percent_threshold": 5.0,
-      "smoothing_window": 3
+      "min_percent_threshold": 15.0,
+      "smoothing_window": 5
     }
   }
 }

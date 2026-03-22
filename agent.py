@@ -135,6 +135,71 @@ class DataProcessor:
             return None  # невалидный JSON – неудача
 
     @staticmethod
+    def extract_groups_from_step2_response(response_text: str) -> List[Dict[str, Any]]:
+        """
+        Извлекает группы из ответа второго агента.
+        Ожидаемый формат:
+        <result>
+        {
+          "Группа1": 1,
+          "Группа2": 2,
+          ...
+        }
+        <separator>
+        1 | 1
+        2 | 2
+        ...
+        </result>
+        """
+        match = re.search(r'<result>(.*?)</result>', response_text, re.DOTALL)
+        if not match:
+            return None
+
+        content = match.group(1).strip()
+        # Разделяем по <separator>
+        if '<separator>' not in content:
+            return None
+
+        groups_json_str, lines_str = content.split('<separator>', 1)
+        groups_json_str = groups_json_str.strip()
+        lines_str = lines_str.strip()
+
+        # Парсим словарь групп
+        try:
+            groups_dict = json.loads(groups_json_str)
+        except json.JSONDecodeError:
+            return None
+
+        # Создаём обратное отображение номер групп -> названия
+        num_to_name = {v: k for k, v in groups_dict.items()}
+
+        # Собираем списки номеров проблем по группам
+        group_complaints = {num: [] for num in num_to_name.keys()}
+        for line in lines_str.split('\n'):
+            if not line.strip():
+                continue
+            parts = line.split('|')
+            if len(parts) != 2:
+                continue
+            try:
+                prob_num = int(parts[0].strip())
+                group_num = int(parts[1].strip())
+            except ValueError:
+                continue
+            if group_num in group_complaints:
+                group_complaints[group_num].append(prob_num)
+
+        # Преобразуем в список групп
+        result = []
+        for group_num, complaints in group_complaints.items():
+            if group_num in num_to_name:
+                result.append({
+                    'name': num_to_name[group_num],
+                    'complaints': complaints
+                })
+        return result
+
+    @staticmethod
     def load_chats_from_json(file_path: str, max_messages_per_chat: int = None, max_chats: int = None) -> list:
         """
         Load chats data from a JSON file containing an array of chat objects.
@@ -355,6 +420,7 @@ class DataAnalyzer:
         self.max_chain_packet_messages = self._get_int(config, 'max_chain_packet_messages', 150, 1)
         self.isolated_packet_size = self._get_int(config, 'isolated_packet_size', 400, 1)
         self.max_retries = self._get_int(config, 'max_retries', 3, 1)
+        self.problems_per_packet = self._get_int(config, 'problems_per_packet', 200, 1)
 
         self.api_key_file = self._get_str(config, 'api_key_file')
         self.agent_id = self._get_str(config, 'agent_id')
@@ -601,6 +667,7 @@ class DataAnalyzer:
     def step2_aggregate_results(self, main_pbar: Optional[tqdm] = None):
         """
         Шаг 2: агрегация промежуточных результатов через второго агента.
+        Реализует рекурсивное разбиение на пакеты по problems_per_packet элементов.
         Сохраняет результаты в agent_data/analysis_step_2.json.
         """
         self.current_stage = "Этап 2: Агрегация"
@@ -616,7 +683,6 @@ class DataAnalyzer:
             self.base_url, self.model_name
         )
 
-        # Load all entries from step1 file
         with open(step1_json_path, 'r', encoding='utf-8') as f:
             try:
                 step1_data = json.load(f)
@@ -624,71 +690,128 @@ class DataAnalyzer:
                 self._log(1, f"  Ошибка чтения файла {step1_json_path}.")
                 return
 
-        # Build user query lines: "number | problem name | vote count"
-        lines = []
-        problem_index = 1
+        # Построить список items для рекурсии: каждый item содержит имя и список исходных индексов
+        items = []
         for chat_entry in step1_data:
             problems = chat_entry.get('analisis_result', [])
             for prob in problems:
                 name = prob.get('name', 'Без названия')
-                count = prob.get('count', 0)
-                lines.append(f"{problem_index} | {name} | {count}")
-                problem_index += 1
+                items.append({
+                    'name': name,
+                    'indices': []  # будет заполнено позже
+                })
 
-        if not lines:
-            self._log(1, "  Нет данных для финального анализа.")
-            return
+        for idx, item in enumerate(items, start=1):
+            item['indices'] = [idx]
 
-        user_query = "\n".join(lines)
-        self._log(1, "\n  Запрос второму агенту:", indent=1)
-        self._log(1, user_query, indent=2)
-        self._log(2, "  " + "-" * 50, indent=1)
+        limit = self.problems_per_packet
 
-        # Если уровень логирования 1, показываем прогресс-бар для этого шага (position=1)
-        if self.logging_level == 1:
-            pbar = tqdm(total=1, desc=self.current_stage, position=1, leave=False)
+        def aggregate_level(current_items: list, level: int = 0) -> list:
+            """
+            current_items: список словарей с полями name, indices
+            возвращает список групп: [{'name': str, 'indices': list}]
+            """
+            if len(current_items) <= limit:
+                # Формируем запрос без количества голосов
+                lines = [f"{i} | {item['name']}" for i, item in enumerate(current_items, start=1)]
+                user_query = "\n".join(lines)
 
-        # Retry loop
-        final_parsed = None
-        for attempt in range(self.max_retries):
-            try:
-                # Send to second agent
-                response2 = agent2.send_full_conversation(user_query, temperature=0.7, max_tokens=4096)
-                self._log(2, "  Ответ второго агента:", indent=1)
-                self._log(2, response2, indent=2)
+                self._log(2, f"    Отправка пакета из {len(current_items)} элементов (уровень {level})")
+                self._log(2, user_query[:200] + "..." if len(user_query) > 200 else user_query)
 
-                # Extract final result – None означает ошибку извлечения
-                final_parsed = DataProcessor.extract_from_response(response2)
-                if final_parsed is not None:
-                    break
+                final_parsed = None
+                for attempt in range(self.max_retries):
+                    try:
+                        response2 = agent2.send_full_conversation(user_query, temperature=0.7, max_tokens=4096)
+                        self._log(2, f"    Ответ агента (уровень {level}, попытка {attempt+1}):")
+                        self._log(2, response2)  # полный ответ
+
+                        final_parsed = DataProcessor.extract_groups_from_step2_response(response2)
+                        if final_parsed is not None:
+                            break
+                        else:
+                            self._log(2, f"    Попытка {attempt+1}: не удалось извлечь группы, повтор через 2 сек...")
+                            time.sleep(2)
+                    except Exception as e:
+                        self._log(2, f"    Ошибка при попытке {attempt+1}: {e}")
+                        if attempt < self.max_retries - 1:
+                            self._log(2, "    Повтор через 5 сек...")
+                            time.sleep(5)
+                        else:
+                            self._log(2, "    Достигнут лимит попыток. Все проблемы этого пакета будут отнесены к группе 'Не классифицировано'.")
+                            final_parsed = []
+
+                groups = []
+                if final_parsed and isinstance(final_parsed, list):
+                    covered = set()
+                    for group in final_parsed:
+                        if not isinstance(group, dict) or 'name' not in group or 'complaints' not in group:
+                            self._log(2, f"    Пропуск некорректной группы: {group}")
+                            continue
+                        name = group['name']
+                        local_nums = group['complaints']
+                        all_indices = []
+                        for local in local_nums:
+                            if 1 <= local <= len(current_items):
+                                item = current_items[local-1]
+                                all_indices.extend(item['indices'])
+                                covered.add(local)
+                            else:
+                                self._log(2, f"    Предупреждение: локальный номер {local} вне диапазона")
+                        groups.append({
+                            'name': name,
+                            'indices': all_indices
+                        })
+                    # Добавляем нераспределённые
+                    all_nums = set(range(1, len(current_items)+1))
+                    missing = all_nums - covered
+                    if missing:
+                        self._log(2, f"    Найдены нераспределённые локальные номера: {sorted(missing)}. Добавляем группу 'Не классифицировано'.")
+                        all_indices = []
+                        for local in sorted(missing):
+                            item = current_items[local-1]
+                            all_indices.extend(item['indices'])
+                        groups.append({
+                            'name': 'Не классифицировано',
+                            'indices': all_indices
+                        })
                 else:
-                    self._log(2, f"  Попытка {attempt+1}: не удалось извлечь данные (отсутствуют теги или невалидный JSON). Повтор через 2 сек...", indent=1)
-                    time.sleep(2)
-            except Exception as e:
-                self._log(2, f"  Ошибка при попытке {attempt+1}: {e}", indent=1)
-                if attempt < self.max_retries - 1:
-                    self._log(2, "  Повтор через 5 сек...", indent=1)
-                    time.sleep(5)
+                    # Если ответ пустой или невалидный, все локальные номера попадают в 'Не классифицировано'
+                    self._log(2, f"    Ответ агента невалиден. Все {len(current_items)} локальных проблем отправлены в группу 'Не классифицировано'.")
+                    all_indices = []
+                    for local in range(1, len(current_items)+1):
+                        item = current_items[local-1]
+                        all_indices.extend(item['indices'])
+                    groups.append({
+                        'name': 'Не классифицировано',
+                        'indices': all_indices
+                    })
+                return groups
+            else:
+                # Рекурсивный случай: разбиваем на пакеты по limit
+                chunks = [current_items[i:i+limit] for i in range(0, len(current_items), limit)]
+                all_groups = []
+                for chunk in chunks:
+                    chunk_groups = aggregate_level(chunk, level+1)
+                    all_groups.extend(chunk_groups)
+                # Рекурсивно обрабатываем список групп как новый уровень
+                if len(all_groups) <= limit:
+                    return aggregate_level(all_groups, level+1)
                 else:
-                    self._log(2, "  Достигнут лимит попыток. Сохраняем пустой результат.", indent=1)
-                    final_parsed = []
+                    return aggregate_level(all_groups, level+1)
 
-        if self.logging_level == 1:
-            pbar.update(1)
-            pbar.close()
+        final_groups = aggregate_level(items)
 
-        if final_parsed is None:
-            final_parsed = []
+        # Преобразуем в формат step2: список словарей с 'name' и 'complaints' (indices)
+        step2_result = [{'name': g['name'], 'complaints': g['indices']} for g in final_groups]
 
-        # Save to step2 JSON file (overwrite)
         os.makedirs(os.path.dirname(step2_json_path), exist_ok=True)
         with open(step2_json_path, 'w', encoding='utf-8') as f:
-            json.dump(final_parsed, f, ensure_ascii=False, indent=2)
+            json.dump(step2_result, f, ensure_ascii=False, indent=2)
 
         self._log(1, f"  Итоговый результат сохранён в файл: {step2_json_path}")
         self._log(2, "  " + "-" * 50, indent=1)
 
-        # Обновляем основной прогресс-бар после завершения шага
         if self.logging_level == 1 and main_pbar is not None:
             main_pbar.update(1)
 

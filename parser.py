@@ -88,7 +88,3 @@ class VKParser:
             offset += count
             time.sleep(self.request_delay)
         print(f"Группа {group_id} завершена, всего обработано {total_processed} постов")
-
-    # ---------- Остальные методы (_process_post, _parse_comments, _process_comment, _get_or_create_user, _process_attachment) ----------
-    # Они остаются точно такими же, как в вашем исходном parser.py, только используют self.vk, self.db, self.start_timestamp, self.end_timestamp
-    # (я их не копирую, чтобы не загромождать, но вы вставьте их из вашего текущего файла)

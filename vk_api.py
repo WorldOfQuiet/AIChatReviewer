@@ -1,11 +1,14 @@
 import requests
 import time
-from config import VK_TOKEN, VK_API_VERSION, REQUEST_DELAY
+
+import requests
+import time
 
 class VKAPI:
-    def __init__(self):
-        self.token = VK_TOKEN
-        self.version = VK_API_VERSION
+    def __init__(self, token: str, api_version: str, request_delay: float):
+        self.token = token
+        self.version = api_version
+        self.request_delay = request_delay
         self.base_url = "https://api.vk.com/method/"
         self.last_request_time = 0
 
@@ -17,8 +20,8 @@ class VKAPI:
 
         # Соблюдаем rate limits
         elapsed = time.time() - self.last_request_time
-        if elapsed < REQUEST_DELAY:
-            time.sleep(REQUEST_DELAY - elapsed)
+        if elapsed < self.request_delay:
+            time.sleep(self.request_delay - elapsed)
 
         response = requests.get(self.base_url + method, params=params).json()
         self.last_request_time = time.time()

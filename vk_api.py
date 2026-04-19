@@ -18,7 +18,7 @@ class VKAPI:
         params["access_token"] = self.token
         params["v"] = self.version
 
-        # Соблюдаем rate  limits
+        # Соблюдаем rate limits
         elapsed = time.time() - self.last_request_time
         if elapsed < self.request_delay:
             time.sleep(self.request_delay - elapsed)

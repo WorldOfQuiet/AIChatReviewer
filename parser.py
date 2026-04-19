@@ -6,6 +6,7 @@ from db import Database
 
 logger = logging.getLogger(__name__)
 
+
 class VKParser:
     def __init__(self, vk_token: str, vk_api_version: str, request_delay: float,
                  groups_file: str, db_file: str, start_date: str = None,

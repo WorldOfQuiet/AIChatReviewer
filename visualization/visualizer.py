@@ -21,12 +21,14 @@ class Visualizer:
                 smoothing_window (int): размер окна для сглаживания (0 - отключено,
                                           положительное число - количество значимых интервалов
                                           слева и справа от текущего, которые учитываются)
+                font_size (int): размер шрифта для всех текстовых элементов графика (по умолчанию 12).
         """
         self.prefs = preferences
         self.data_file = preferences.get('data_file', 'agent_data/analysis_step_3.json')
         self.log_level = preferences.get('log_level', 2)
         self.threshold_percent = preferences.get('min_percent_threshold', 5.0)
         self.smoothing_window = preferences.get('smoothing_window', 0)
+        self.font_size = preferences.get('font_size', 12)  # размер шрифта из конфига
         self.data = self._load_data()
         self._log(1, f"✅ Загружено {len(self.data)} категорий из файла {self.data_file}")
 
@@ -76,6 +78,10 @@ class Visualizer:
         self._log(1, f"📌 interval_days = {interval_days}")
         self._log(1, f"📌 Порог: {self.threshold_percent}% от среднего")
         self._log(1, f"📌 Окно сглаживания: {self.smoothing_window}")
+        self._log(1, f"📌 Размер шрифта: {self.font_size}")
+
+        # Устанавливаем глобальный размер шрифта для всех элементов графика
+        plt.rcParams.update({'font.size': self.font_size})
 
         # Границы
         start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
@@ -192,7 +198,7 @@ class Visualizer:
             else:
                 self._log(2, f"   {cat}: нет точек после фильтрации")
 
-        # ========== ПОСТРОЕНИЕ ГРАФИКА ==========
+       # ========== ПОСТРОЕНИЕ ГРАФИКА ==========
         fig, ax = plt.subplots(figsize=(14, 7))
         for cat, points in plot_data.items():
             if not points:
@@ -203,11 +209,44 @@ class Visualizer:
         ax.set_xlabel('Дата')
         ax.set_ylabel('Количество голосов')
         ax.set_title(f'Динамика голосов (интервал {interval_days} дн.)')
-        ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), fontsize=9)
         ax.grid(True, linestyle='--', alpha=0.7)
         plt.xticks(rotation=45)
-        plt.tight_layout()
 
+        # --- Динамический расчёт параметров легенды ---
+        num_cats = len(plot_data)
+        if num_cats == 0:
+            self._log(1, "⚠️ Нет категорий для отображения легенды")
+            return
+
+        # Базовые значения для N=2, F=20
+        base_offset = -0.30
+        base_bottom = 0.15   # стандартный нижний отступ
+
+        # Масштабируем пропорционально количеству категорий и размеру шрифта
+        scale_factor = (num_cats / 2.0) * (self.font_size / 20.0)
+        y_offset = base_offset * scale_factor
+        bottom_margin = base_bottom * scale_factor
+
+        # Ограничиваем сверху, чтобы легенда не ушла слишком далеко
+        y_offset = max(-0.8, min(-0.1, y_offset))   # от -0.1 до -0.8
+        bottom_margin = min(0.5, max(0.1, bottom_margin))  # от 0.1 до 0.5
+
+        self._log(2, f"📐 Легенда: категорий={num_cats}, шрифт={self.font_size}, "
+                     f"y_offset={y_offset:.3f}, bottom={bottom_margin:.3f}")
+
+        # Размещение легенды
+        ax.legend(
+            loc='upper center',
+            bbox_to_anchor=(0.5, y_offset),
+            fontsize=self.font_size,
+            ncol=1,
+            frameon=False
+        )
+
+        # Корректировка нижнего отступа
+        plt.subplots_adjust(bottom=bottom_margin)
+
+        # Сохранение и показ
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             self._log(1, f"✅ График сохранён: {save_path}")

@@ -22,8 +22,8 @@
     "preferences": {
       "api_key_file": "api_key.json",
       "agent_id": "b1ghrgitp2eqakb9c44o",
-      "system_prompt_file": "agent_data/analysis_of_chat(instructions_3).txt",
-      "system_prompt_file_2": "agent_data/analysis_of_results.txt",
+      "system_prompt_file": "agent_data/prompt_for_analysis_step_1 (instructions_3).txt",
+      "system_prompt_file_2": "agent_data/prompt_for_analysis_step_2 (Roads and snow).txt",
       "base_url": "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
       "model_name": "aliceai-llm/latest",
       "max_chats": 1,
@@ -32,8 +32,8 @@
       "max_isolated_packets": 0,
       "max_chain_packet_messages": 20,
       "isolated_packet_size": 200,
-      "max_retries": 2,
-      "problems_per_packet": 200,
+      "max_retries": 3,
+      "problems_per_packet": 50,
       "steps": {
         "step1_analyze_chats": false,
         "step2_aggregate_results": true,
@@ -48,10 +48,11 @@
       "interval_days": 14,
       "start_date": null,
       "end_date": null,
-      "save_path": "votes_14-days-n.png",
+      "save_path": "votes_14-days-R&S.png",
       "show": false,
-      "min_percent_threshold": 15.0,
-      "smoothing_window": 5
+      "font_size": 25,
+      "min_percent_threshold": 30.0,
+      "smoothing_window": 3
     }
   }
 }

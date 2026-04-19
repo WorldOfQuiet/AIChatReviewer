@@ -28,7 +28,7 @@ def main() -> None:
     try:
         config = load_config()
     except Exception as e:
-        print(f"Ошибка загрузки конфигурации: {e}")
+        logger.error(f"Ошибка загрузки конфигурации: {e}")
         sys.exit(1)
 
     # Настройка логирования
@@ -85,7 +85,7 @@ def main() -> None:
     # ===== Визуализатор =====
     visualizer_cfg = config.get('visualizer', {})
     if visualizer_cfg.get("enabled", False):
-        from visualizer import Visualizer
+        from visualization.visualizer import Visualizer
 
         prefs = visualizer_cfg.get("preferences", {}).copy()
         prefs["log_level"] = shared_logging_level  # добавляем общий уровень (визуализатор ожидает log_level)

@@ -5,15 +5,15 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from tqdm import tqdm
 
-from core.api_client import AliceAIAgent
+from core.api_client import LLMClient
 from core.data_processor import DataProcessor
 
 
 class BaseAnalyzer:
     """Базовый класс анализатора с общими утилитами."""
 
-    DEFAULT_BASE_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
-    DEFAULT_MODEL_NAME = "aliceai-llm/latest"
+    DEFAULT_BASE_URL = "https://routerai.ru/api/v1"
+    DEFAULT_MODEL_NAME = "deepseek/deepseek-v4-flash"
 
     def __init__(self, config: dict):
         # Инициализация параметров из конфигурации
@@ -27,8 +27,7 @@ class BaseAnalyzer:
         self.isolated_packet_size = self._get_int(config, 'isolated_packet_size', 400, 1)
         self.max_retries = self._get_int(config, 'max_retries', 3, 1)
         self.problems_per_packet = self._get_int(config, 'problems_per_packet', 200, 1)
-        self.api_key_file = self._get_str(config, 'api_key_file')
-        self.agent_id = self._get_str(config, 'agent_id')
+        self.api_key = self._get_str(config, 'api_key')
         self.system_prompt_file = self._get_str(config, 'system_prompt_file')
         self.system_prompt_file_2 = self._get_str(config, 'system_prompt_file_2')
         self.chats_file = self._get_str(config, 'chats_file')
@@ -73,7 +72,7 @@ class BaseAnalyzer:
         dt = first.get('_dt')
         return dt if dt is not None else first['id']
 
-    def _send_with_retries(self, agent: AliceAIAgent, text: str, context: str):
+    def _send_with_retries(self, agent: LLMClient, text: str, context: str):
         """Отправить запрос агенту с повторными попытками."""
         for attempt in range(self.max_retries):
             try:

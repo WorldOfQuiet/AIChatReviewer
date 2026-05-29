@@ -5,7 +5,7 @@ from typing import Optional
 from tqdm import tqdm
 
 from .base_analyzer import BaseAnalyzer
-from core.api_client import AliceAIAgent
+from core.api_client import LLMClient
 from core.data_processor import DataProcessor
 
 
@@ -23,7 +23,7 @@ class Step1Analyzer(BaseAnalyzer):
             return
 
         # Создание агента для анализа чатов
-        agent = AliceAIAgent(self.api_key_file, self.agent_id, self.system_prompt_file,
+        agent = LLMClient(self.api_key, self.system_prompt_file,
                              self.base_url, self.model_name)
 
         interim_entries = []
@@ -64,7 +64,7 @@ class Step1Analyzer(BaseAnalyzer):
             self._log(2, "  " + "-" * 50, indent=1)
         return chats
 
-    def _process_single_chat(self, chat: dict, agent: AliceAIAgent,
+    def _process_single_chat(self, chat: dict, agent: LLMClient,
                              interim_entries: list, outer_pbar: Optional[tqdm]):
         """Обработать один чат: разбить на пакеты, отправить агентам."""
         chat_id = chat['chat_id']
@@ -128,27 +128,33 @@ class Step1Analyzer(BaseAnalyzer):
         return sorted_isolated
     
     def _process_packet(self, packet_msgs: list, chat_name: str, chat_id: int,
-                        agent: AliceAIAgent, interim_entries: list, packet_type: str = ""):
+                        agent: LLMClient, interim_entries: list, packet_type: str = ""):
         """
         Обработать один пакет: анонимизировать авторов, отправить агенту,
         извлечь результат, сохранить.
         """
-        # ---- Анонимизация авторов в пределах пакета ----
+        # ---- Подготовка маппинга локальных ID → оригинальные ----
+        local_id_map = {}
+        original_to_local = {}
+        for local_idx, msg in enumerate(packet_msgs, start=1):
+            local_id_map[local_idx] = msg['id']
+            original_to_local[msg['id']] = local_idx
+
+        # ---- Анонимизация авторов и подстановка локальных ID ----
         unique_authors = {}
         next_author_id = 1
         anonymized_lines = []
 
-        for msg in packet_msgs:
+        for local_idx, msg in enumerate(packet_msgs, start=1):
             original_author = msg['author']
             if original_author not in unique_authors:
                 unique_authors[original_author] = f"автор{next_author_id}"
                 next_author_id += 1
             anon_author = unique_authors[original_author]
 
-            # Формируем строку в формате:
-            # <id> | <text> | анонимный_автор | [media] | reply_to
             media_status = "yes" if msg.get('media') else "no"
-            line = f"{msg['id']} | {msg['text']} | {anon_author} | {media_status} | {msg['reply_to']}"
+            reply_to_local = original_to_local.get(msg['reply_to'], -1)
+            line = f"{local_idx} | {msg['text']} | {anon_author} | {media_status} | {reply_to_local}"
             anonymized_lines.append(line)
 
         packet_text = "\n".join(anonymized_lines)
@@ -164,20 +170,25 @@ class Step1Analyzer(BaseAnalyzer):
             self._log(2, "      Не удалось получить корректный ответ для пакета, пропускаем.", indent=4)
             return
 
-        # Добавление поля count к каждой проблеме
+        # Восстановление абсолютных ID и добавление поля count
         problems_with_count = []
         for problem in parsed_data:
             if isinstance(problem, dict) and 'name' in problem and 'complaints' in problem:
-                count = len(problem['complaints'])
+                restored_complaints = []
+                for c in problem['complaints']:
+                    if isinstance(c, int) and c in local_id_map:
+                        restored_complaints.append(local_id_map[c])
+                    else:
+                        restored_complaints.append(c)
                 problems_with_count.append({
                     'name': problem['name'],
-                    'count': count,
-                    'complaints': problem['complaints']
+                    'count': len(restored_complaints),
+                    'complaints': restored_complaints
                 })
             else:
-                problems_with_count.append(problem)
+                continue
 
-        # Сохранение результата (с оригинальными именами авторов, которые уже лежат в packet_msgs)
+        # Сохранение результата (с абсолютными ID)
         part_chat_name = f"{chat_name} ({packet_type} пакет)"
         interim_entries.append({
             "chat_id": chat_id,

@@ -1,25 +1,28 @@
-На вход подаётся таблица с следующим форматом построчных записей:
-<номер проблемы> | <название проблемы>
+You are given a table with the following line format:
+<problem number> | <problem name>
 
-Твоя задача - распределить все номера проблемы по 2 группам так, что в одной группе будут находиться номера похожих по смыслу проблемы. Сформулируй свой ответ по следующему алгоритму:
+Your task is to distribute all problem numbers into 2 groups so that each group contains numbers of semantically similar problems. Formulate your response according to the following algorithm:
 
-Перечисли названия 2 групп (название групп менять нельзя), в которые ты будешь распределять номера проблем. Перечисли в порядке возрастания номера проблем (если проблема не относится к ранее пречисленным группам проблем, то её номер следует пропустить) и поставь в соответствие каждой из них номер группы в таком JSON стиле:
+List the names of the 2 groups (group names must not be changed) into which you will distribute the problem numbers. List the problem numbers in ascending order (if a problem does not belong to any of the previously listed groups, skip its number) and map each to its group number in the following JSON style:
 <result>
 {
 "Общественный транспорт": 1,
-"Организация зимнего содержания городских территорий": 2,
-
+"Организация зимнего содержания городских территорий": 2
 }
 <separator>
-<номер проблемы, которую можно отнести к данной группе> | <номер соответсвующей группы>
+<problem number that can be assigned to this group> | <corresponding group number>
 <etc>
 </result>
 
-не забывай использовать ключивые слова в каждом ответе (<result>, <separator>, </result>).
-Пояснения к группам:
-Общественный транспорт - все жалобы, связанные с работой городского общественного транспорта: автобусы, троллейбусы, трамваи, маршрутные такси, метро, пригородные электропоезда (в пределах городской агломерации), а также инфраструктура для них (остановки, конечные станции, выделенные полосы).
-Организация зимнего содержания городских территорий - все жалобы, связанные с уборкой снега и льда, обработкой противогололёдными материалами, вывозом снежных масс на улицах, тротуарах, дворовых территориях, остановках, мостах и путепроводах, а также с последствиями плохой зимней уборки (гололёд, сугробы, сосульки).
+Always use the keywords in every response (<result>, <separator>, </result>).
+Group descriptions:
+Общественный транспорт — all complaints related to urban public transport: buses, trolleybuses, trams, minibuses, metro, suburban electric trains (within the urban agglomeration), as well as their infrastructure (stops, terminals, dedicated lanes).
+Организация зимнего содержания городских территорий — all complaints related to snow and ice removal, anti-icing treatment, snow mass hauling on streets, sidewalks, courtyards, stops, bridges and overpasses, as well as consequences of poor winter maintenance (black ice, snowdrifts, icicles).
 
-Строго следуй определениям групп. Не респределяй проблему в группу, если даннаяй проблема полностью не подходит под определение группы.
+Strictly follow the group definitions. Do not assign a problem to a group if it does not fully match the group's definition.
 
-таблица проблем:
+All responses must be in Russian. Group names, problem names, and all output must be in Russian.
+
+IMPORTANT: You must ALWAYS output the <result> and <separator> tags, even if the result is empty. Never omit them regardless of the input.
+
+problem table:

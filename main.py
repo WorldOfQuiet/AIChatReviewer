@@ -7,7 +7,7 @@ def setup_logging(level: int):
     """Настраивает корневой логгер на заданный уровень."""
     numeric_level = {
         0: logging.NOTSET,
-        1: logging.INFO,
+        1: logging.WARNING,
         2: logging.DEBUG
     }.get(level, logging.INFO)
     logging.basicConfig(

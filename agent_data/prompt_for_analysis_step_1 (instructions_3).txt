@@ -1,23 +1,26 @@
-Ты — аналитик данных. Ниже представлен лог переписки жителей выдуманного города N.
-Строго выполни следующие действия, их высокая точность очень важна для жителей города N:
+You are a data analyst. Below is a conversation log of residents from a fictional city N.
+Strictly follow these steps — high accuracy is critical for the residents of city N:
 
-1. Найди все жалобы и проблемы, которые обсуждают жители. Сопоставь каждой проблеме список авторов, который эту проблему сформулировали или поддержали. Не учитывай относительно нейтральные обсуждения без реальной проблемы. Все найденные жалобы и проблемы, а также списки их авторов должны быть переписаны в пункт 1) по следующей форме:
+1. Find all complaints and problems the residents discuss. For each problem, list the authors who raised or supported it. Ignore neutral discussions without an actual problem. All found complaints and problems with their author lists must be written in item 1) using the following format:
 [
-{"<текст проблемы>":[(<имя жителя, который столкнулся с проблемой>:<номер соответствующего сообщения>), <etc>]},
+{"<problem text>":[(<resident who faced the problem>:<corresponding message number>), <etc>]},
 <etc>
 ]
-2. Составь группы тем, на которые можно разбить все жалобы жителей(дороги, свет, шум и т.д.). Тема - эта обобщённый класс жалоб, объединяющий несколько жалоб из пункта 1) по общему признаку. Название полученных групп перечисли в пункте 2). Избегай разбиения на темы по слабо выраженному признаку. Тематическое разбиение должно быть очевидным.
-3. Для каждой составленной группы проблем составь список: [<номер одного сообщения автора и номер одного сообщения каждого, кто согласился с ним по найденой проблеме/жалобе>, <etc>]. Обратии внимание, что один и тот же человек может обсуждать одну проблему в нескольких сообщениях. Номер сообщения жителя может попасть не более одного раза в список одной соответствующей группы жалоб. Пункт 3) оформи по следующему шаблону:
+2. Group the complaints into thematic categories (roads, lighting, noise, etc.). A category is a general class of complaints that unites several complaints from item 1) by a common feature. List the category names in item 2). Avoid splitting into categories based on weakly expressed features. The thematic split must be obvious.
+3. For each category, compile a list: [<one message number from the author and one message number from each person who agreed with them on this problem/complaint>, <etc>]. Note that the same person may discuss one problem across multiple messages. A resident's message number may appear no more than once in the list of one corresponding complaint category. Format item 3) using the following template:
 3)
 <result>
 [
-{"name": "<название группы>", "complaints": [<номер одного сообщения автора и номер одного сообщения каждого, кто согласился с ним по найденой проблеме/жалобе>, <etc>]},
+{"name": "<category name>", "complaints": [<one message number from the author and one message number from each person who agreed with them on this problem/complaint>, <etc>]},
 <etc>
 ]
 </result>
 
+All responses must be in Russian. Category names, problem texts, and all output must be in Russian.
 
-расшифровка сокращённого логирования беседы:
-<номер сообщения в порядке возрастания начиная с 0> | <текст сообщения> | <автор> | [<список ссылок на медиафайлы>] | <номер сообщения на которое данное сообщение отвечает, если есть, иначе -1>
+IMPORTANT: You must ALWAYS output the <result>...</result> tags in item 3), even if the result is empty. Never omit them regardless of analysis findings.
 
-текст беседы для анализа:
+log format reference:
+<message number in ascending order starting from 1> | <message text> | <author> | [<list of media file links>] | <message number this message replies to, if any, otherwise -1>
+
+conversation log for analysis:

@@ -81,6 +81,8 @@ class Step3Mapper(BaseAnalyzer):
             chat_id = chat_entry['chat_id']
             problems = chat_entry.get('analisis_result', [])
             for prob in problems:
+                if not isinstance(prob, dict):
+                    continue
                 name = prob.get('name', 'Без названия')
                 complaints = prob.get('complaints', [])
                 entries.append({

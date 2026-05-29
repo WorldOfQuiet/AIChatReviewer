@@ -18,24 +18,23 @@
     }
   },
   "analyzer": {
-    "enabled": false,
+    "enabled": true,
     "preferences": {
-      "api_key_file": "api_key.json",
-      "agent_id": "b1ghrgitp2eqakb9c44o",
+      "api_key": "sk-dQl0PFSZS9cEI6PihKymcizhUP1rTko-",
       "system_prompt_file": "agent_data/prompt_for_analysis_step_1 (instructions_3).txt",
       "system_prompt_file_2": "agent_data/prompt_for_analysis_step_2 (Roads and snow).txt",
-      "base_url": "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
-      "model_name": "aliceai-llm/latest",
+      "base_url": "https://routerai.ru/api/v1",
+      "model_name": "deepseek/deepseek-v4-flash",
       "max_chats": 1,
-      "max_messages_per_chat": 60000,
-      "max_chain_packets": 3000,
+      "max_messages_per_chat": 200000,
+      "max_chain_packets": 15000,
       "max_isolated_packets": 0,
       "max_chain_packet_messages": 20,
       "isolated_packet_size": 200,
       "max_retries": 3,
       "problems_per_packet": 50,
       "steps": {
-        "step1_analyze_chats": false,
+        "step1_analyze_chats": true,
         "step2_aggregate_results": true,
         "step3_backward_mapping": true
       }

@@ -5,7 +5,7 @@ from typing import Optional
 from tqdm import tqdm
 
 from .base_analyzer import BaseAnalyzer
-from core.api_client import AliceAIAgent
+from core.api_client import LLMClient
 from core.data_processor import DataProcessor
 
 
@@ -32,7 +32,7 @@ class Step2Aggregator(BaseAnalyzer):
         items = self._build_items_from_step1(step1_data)
 
         # Создание агента для агрегации
-        agent2 = AliceAIAgent(self.api_key_file, self.agent_id, self.system_prompt_file_2,
+        agent2 = LLMClient(self.api_key, self.system_prompt_file_2,
                               self.base_url, self.model_name)
 
         limit = self.problems_per_packet
@@ -65,13 +65,15 @@ class Step2Aggregator(BaseAnalyzer):
         for chat_entry in step1_data:
             problems = chat_entry.get('analisis_result', [])
             for prob in problems:
+                if not isinstance(prob, dict):
+                    continue
                 name = prob.get('name', 'Без названия')
                 items.append({'name': name, 'indices': []})
         for idx, item in enumerate(items, start=1):
             item['indices'] = [idx]
         return items
 
-    def _aggregate_level(self, current_items: list, limit: int, agent: AliceAIAgent,
+    def _aggregate_level(self, current_items: list, limit: int, agent: LLMClient,
                          ungrouped_indices: list, level: int) -> list:
         """Рекурсивная агрегация одного уровня. Возвращает группы (без 'Не классифицировано')."""
         # Базовый случай: количество элементов не превышает limit
@@ -91,7 +93,7 @@ class Step2Aggregator(BaseAnalyzer):
         else:
             return self._aggregate_level(all_groups, limit, agent, ungrouped_indices, level+1)
 
-    def _process_base_case(self, current_items: list, agent: AliceAIAgent,
+    def _process_base_case(self, current_items: list, agent: LLMClient,
                            ungrouped_indices: list, level: int) -> list:
         """Обработка базового случая: отправка запроса агенту и разделение на группы."""
         # Формирование запроса
@@ -116,7 +118,7 @@ class Step2Aggregator(BaseAnalyzer):
                 other_groups.append(g)
         return other_groups
 
-    def _send_aggregation_request(self, agent: AliceAIAgent, query: str, level: int) -> Optional[list]:
+    def _send_aggregation_request(self, agent: LLMClient, query: str, level: int) -> Optional[list]:
         """Отправить запрос на агрегацию и получить распарсенный ответ."""
         for attempt in range(self.max_retries):
             try:

@@ -28,7 +28,7 @@ def main() -> None:
     try:
         config = load_config()
     except Exception as e:
-        logger.error(f"Ошибка загрузки конфигурации: {e}")
+        logging.error(f"Ошибка загрузки конфигурации: {e}")
         sys.exit(1)
 
     # Настройка логирования

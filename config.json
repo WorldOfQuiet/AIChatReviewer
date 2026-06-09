@@ -1,7 +1,7 @@
 {
   "shared": {
-    "chats_file": "agent_data/chats.json",
-    "logging_level": 2
+    "chats_file": "agent_data/chat-new.json",
+    "logging_level": 1
   },
   "parser": {
     "enabled": false,
@@ -18,23 +18,23 @@
     }
   },
   "analyzer": {
-    "enabled": true,
+    "enabled": false,
     "preferences": {
       "api_key": "sk-dQl0PFSZS9cEI6PihKymcizhUP1rTko-",
       "system_prompt_file": "agent_data/prompt_for_analysis_step_1 (instructions_3).txt",
-      "system_prompt_file_2": "agent_data/prompt_for_analysis_step_2 (Roads and snow).txt",
+      "system_prompt_file_2": "agent_data/prompt_for_analysis_step_2 (Internet and Medicine).txt",
       "base_url": "https://routerai.ru/api/v1",
       "model_name": "deepseek/deepseek-v4-flash",
       "max_chats": 1,
-      "max_messages_per_chat": 200000,
-      "max_chain_packets": 15000,
+      "max_messages_per_chat": 300000,
+      "max_chain_packets": 30000,
       "max_isolated_packets": 0,
       "max_chain_packet_messages": 20,
       "isolated_packet_size": 200,
       "max_retries": 3,
       "problems_per_packet": 50,
       "steps": {
-        "step1_analyze_chats": true,
+        "step1_analyze_chats": false,
         "step2_aggregate_results": true,
         "step3_backward_mapping": true
       }
@@ -47,10 +47,10 @@
       "interval_days": 14,
       "start_date": null,
       "end_date": null,
-      "save_path": "votes_14-days-R&S.png",
+      "save_path": "votes_14-days-I&M.png",
       "show": false,
       "font_size": 25,
-      "min_percent_threshold": 30.0,
+      "min_percent_threshold": 65.0,
       "smoothing_window": 3
     }
   }

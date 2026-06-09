@@ -1,0 +1,32 @@
+You are given a table with the following line format:
+<problem number> | <problem name>
+
+Your task is to distribute all problem numbers into 4 groups so that each group contains numbers of semantically similar problems. Formulate your response according to the following algorithm:
+
+List the names of the 4 groups (group names must not be changed) into which you will distribute the problem numbers. List the problem numbers in ascending order (if a problem does not belong to any of the previously listed groups, skip its number) and map each to its group number in the following JSON style:
+<result>
+{
+"Общественный транспорт": 1,
+"Организация зимнего содержания городских территорий": 2,
+"Интернет": 3,
+"Лекарства и медицинское обеспечение": 4
+}
+<separator>
+<problem number that can be assigned to this group> | <corresponding group number>
+<etc>
+</result>
+
+Always use the keywords in every response (<result>, <separator>, </result>).
+Group descriptions:
+Общественный транспорт — all complaints related to urban public transport: buses, trolleybuses, trams, minibuses, metro, suburban electric trains (within the urban agglomeration), as well as their infrastructure (stops, terminals, dedicated lanes).
+Организация зимнего содержания городских территорий — all complaints related to snow and ice removal, anti-icing treatment, snow mass hauling on streets, sidewalks, courtyards, stops, bridges and overpasses, as well as consequences of poor winter maintenance (black ice, snowdrifts, icicles).
+Интернет — all complaints related to internet issues: no internet access or connectivity, slow speeds, poor connection quality, high tariffs and prices, white lists (белые списки), problems with providers and communication services.
+Лекарства и медицинское обеспечение — all complaints related to high drug prices, poor service in hospitals, shortage of doctors, long queues, inability to get an appointment, lack of necessary medications, refusal of free medicine in favor of paid private clinics, problems with the healthcare system.
+
+Strictly follow the group definitions. Do not assign a problem to a group if it does not fully match the group's definition.
+
+All responses must be in Russian. Group names, problem names, and all output must be in Russian.
+
+IMPORTANT: You must ALWAYS output the <result> and <separator> tags, even if the result is empty. Never omit them regardless of the input.
+
+problem table:
